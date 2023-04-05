@@ -1,0 +1,55 @@
+from __gin__ import dynamic_registration
+import __main__ as train_script
+
+import optax
+
+from t5x import utils
+
+from jaxpruner.t5x import sparse_trainer
+from jaxpruner.t5x import sparse_util
+from jaxpruner.t5x import optimizers_wrapper
+
+
+train_script.train.trainer_cls = @sparse_trainer.SparseTrainer
+
+OPTIMIZER = @optimizers_wrapper.SparseOptaxWrapper()
+
+optimizers_wrapper.SparseOptaxWrapper:
+    optax_optimizer = @optimizers_wrapper.chain()
+    sparsity_updater = @sparse_util.create_updater_from_config()
+
+sparse_trainer.SparseTrainer:
+  num_microbatches = None
+  learning_rate_fn = @utils.create_learning_rate_scheduler()
+
+
+sparse_util.create_updater_from_config:
+  pruner_type = 'magnitude'
+  dist_type = 'erk'
+  update_end_step = 75_000
+  update_freq = 1000
+  update_start_step = 25_000
+  sparsity = 0.8
+
+optimizers_wrapper.chain:
+  transformations = [@optax.clip(), @optax.adamw()]
+
+optax.clip:
+  max_delta = 1.0
+
+optax.adamw:
+  # Unlike Adafactor, most optimizers require to specify
+  # `learning_rate`. `learning_rate` accepts a float number (e.g., 1e-4) or
+  # a schedule function, which should take an argument `step` and output
+  # a learning rate for that step.
+  # As for choices of schedule functions, we can either use T5x
+  # learning rate scheduler, i.e., utils.create_learning_rate_scheduler, or
+  # optax's native schedule functions, e.g., warmup_cosine_decay_schedule.
+  learning_rate = @optax.warmup_cosine_decay_schedule()
+
+optax.warmup_cosine_decay_schedule:
+  init_value = 0.0
+  peak_value = 1e-4
+  warmup_steps = 1000
+  decay_steps = %TRAIN_STEPS
+  end_value = 0.0
