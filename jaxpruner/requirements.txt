@@ -4,3 +4,4 @@ jax
 jaxlib
 optax
 numpy
+ml-collections

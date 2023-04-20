@@ -16,7 +16,7 @@
 """Implementation of common (dynamic) sparse training algorithms."""
 import dataclasses
 import functools
-from typing import Callable, Union
+from typing import Callable
 
 import chex
 import jax
@@ -95,7 +95,7 @@ class SET(StaticRandomSparse):
   """
 
   eps: float = 1e-5
-  drop_fraction_fn: Callable[Union[chex.Array, int], float] = lambda _: 0.3
+  drop_fraction_fn: Callable[[int], float] = lambda _: 0.3
   is_debug: bool = False
   skip_gradients: bool = True
 

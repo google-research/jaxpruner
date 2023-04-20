@@ -18,13 +18,13 @@ import copy
 import functools
 import logging
 
-import ml_collections
-import optax
 from jaxpruner import algorithms
 from jaxpruner import base_updater
 from jaxpruner import sparsity_distributions
 from jaxpruner import sparsity_schedules
 from jaxpruner import sparsity_types
+import ml_collections
+import optax
 
 
 ALGORITHM_REGISTRY = {

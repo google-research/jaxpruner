@@ -15,7 +15,7 @@
 
 """This file implements common global pruning algorithms."""
 import dataclasses
-from typing import Optional, Callable
+from typing import Optional, Dict
 
 import chex
 import flax
@@ -31,8 +31,8 @@ from jaxpruner.algorithms import pruners
 class GlobalPruningMixin:
   """Implements Mixin for global pruning."""
 
-  custom_sparsity_map: Optional[dict[str, float]] = None
-  filter_fn: Callable[[tuple[str], chex.Array], bool] = (
+  custom_sparsity_map: Optional[Dict[str, float]] = None
+  filter_fn: base_updater.FilterFnType = (
       sparsity_distributions.NOT_DIM_ONE_FILTER_FN
   )
   normalization_eps: float = 1e-8

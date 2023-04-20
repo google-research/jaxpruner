@@ -1,5 +1,5 @@
 # How to Contribute
-We welcome patches and contributions to this project:
+Please create an issue before sending a pull-request. Currently we are figuring out how to manage pull-requests and plan to welcome patches and contributions to this project:
 
 - Sparse training and pruning algorithms and baselines.
 - Applying existing algorithms to other setting.

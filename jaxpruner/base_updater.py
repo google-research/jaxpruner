@@ -17,23 +17,26 @@
 import dataclasses
 import functools
 import logging
-from typing import Any, Callable, Mapping, NamedTuple, Optional, Tuple
+from typing import Any, Callable, NamedTuple, Optional, Tuple
 
 import chex
 import jax
 import jax.numpy as jnp
-import optax
 from jaxpruner import mask_calculator
 from jaxpruner import sparsity_distributions
 from jaxpruner import sparsity_schedules
 from jaxpruner import sparsity_types
+import optax
+
+FilterFnType = sparsity_distributions.FilterFnType
+CustomSparsityMapType = sparsity_distributions.CustomSparsityMapType
 
 SparsityDistributionFnType = Callable[
     [
         chex.ArrayTree,
         sparsity_types.SparsityType,
-        Optional[Callable[[tuple[Any], chex.Array], Any]],
-        Optional[Mapping[Any, Any]],
+        Optional[FilterFnType],
+        Optional[CustomSparsityMapType],
     ],
     chex.ArrayTree,
 ]

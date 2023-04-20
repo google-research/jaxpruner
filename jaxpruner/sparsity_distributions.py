@@ -22,12 +22,15 @@ sparsity to meet the overall target sparsity.
 Note that all functions in this file must have the same input/output signatures.
 """
 import logging
-from typing import Callable, Mapping, Optional, Union
+from typing import Callable, Mapping, Optional, Union, Tuple
 
 import chex
 import flax
 import jax
 import numpy as np
+
+FilterFnType = Callable[[Tuple[str], chex.Array], bool]
+CustomSparsityMapType = Mapping[Tuple[str], float]
 
 KERNEL_FILTER_FN = lambda key, param: key[-1] == 'kernel'
 NOT_DIM_ONE_FILTER_FN = lambda key, param: param.ndim > 1

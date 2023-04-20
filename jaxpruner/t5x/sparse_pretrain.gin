@@ -5,8 +5,8 @@ import optax
 
 from t5x import utils
 
+from jaxpruner.t5x import config_util
 from jaxpruner.t5x import sparse_trainer
-from jaxpruner.t5x import sparse_util
 from jaxpruner.t5x import optimizers_wrapper
 
 
@@ -16,7 +16,7 @@ OPTIMIZER = @optimizers_wrapper.SparseOptaxWrapper()
 
 optimizers_wrapper.SparseOptaxWrapper:
     optax_optimizer = @optimizers_wrapper.chain()
-    sparsity_updater = @sparse_util.create_updater_from_config()
+    sparsity_updater = @config_util.create_updater_from_config()
 
 sparse_trainer.SparseTrainer:
   num_microbatches = None
