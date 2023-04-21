@@ -126,7 +126,10 @@ def erk(
       k: sparsities[k] if k in sparsities else None
       for k, p in flat_dict.items()
   }
-  return flax.core.freeze(flax.traverse_util.unflatten_dict(res_dict))
+  return_val = flax.traverse_util.unflatten_dict(res_dict)
+  if isinstance(param_tree, flax.core.frozen_dict.FrozenDict):
+    return_val = flax.core.freeze(return_val)
+  return return_val
 
 
 def get_n_zeros(size, sparsity):

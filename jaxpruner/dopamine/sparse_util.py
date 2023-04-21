@@ -23,10 +23,10 @@ import ml_collections
 def create_updater_from_config(
     pruner_type='magnitude',
     dist_type='erk',
-    update_end_step=3,
-    update_freq=1,
-    update_start_step=None,
-    sparsity=0.8,
+    update_end_step=100000,
+    update_freq=1000,
+    update_start_step=20000,
+    sparsity=0.95,
 ):
   """Gin based wrapper around jaxpruner create function."""
   sparsity_config = ml_collections.ConfigDict()

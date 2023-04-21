@@ -14,11 +14,6 @@
 # limitations under the License.
 
 """Implementation of a DQN+Prunner agent in JAX."""
-
-import functools
-import logging
-
-from dopamine.jax import networks
 from dopamine.jax.agents.dqn import dqn_agent
 from dopamine.metrics import statistics_instance
 import gin
@@ -28,27 +23,10 @@ from jaxpruner.dopamine import sparse_util
 
 import numpy as onp
 
-import tensorflow as tf
-
 
 @gin.configurable
 class DqnAgentPruner(dqn_agent.JaxDQNAgent):
   """A JAX implementation of the DQN+Pruner agent."""
-
-  def __init__(self,
-               num_actions,
-               summary_writer=None,
-               network=networks.NatureDQNNetwork,
-               ):
-
-    self._num_actions = num_actions
-    self._network = network
-    logging.info('Creating %s agent:', self.__class__.__name__)
-    super().__init__(
-        num_actions=num_actions, summary_writer=summary_writer,
-        network=functools.partial(
-            network, num_actions=num_actions),
-    )
 
   def _build_networks_and_optimizer(self):
     self._rng, rng = jax.random.split(self._rng)
@@ -98,22 +76,9 @@ class DqnAgentPruner(dqn_agent.JaxDQNAgent):
             self.online_params, only_total_sparsity=True
         )
         if (
-            self.summary_writer is not None
-            and self.training_steps > 0
+            self.training_steps > 0
             and self.training_steps % self.summary_writing_frequency == 0
         ):
-          with self.summary_writer.as_default():
-            tf.summary.scalar(
-                'Loss',
-                loss,
-                step=(self.training_steps // self.update_period),
-            )
-            tf.summary.scalar(
-                'TotalSparsity',
-                total_sparsity['_total_sparsity'],
-                step=(self.training_steps // self.update_period),
-            )
-          self.summary_writer.flush()
           if hasattr(self, 'collector_dispatcher'):
             self.collector_dispatcher.write(
                 [
@@ -130,6 +95,7 @@ class DqnAgentPruner(dqn_agent.JaxDQNAgent):
                 ],
                 collector_allowlist=self._collector_allowlist,
             )
+            self.collector_dispatcher.flush()
       if self.training_steps % self.target_update_period == 0:
         self._sync_weights()
 

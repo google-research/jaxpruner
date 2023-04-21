@@ -22,6 +22,8 @@ JaxDQNAgent.epsilon_decay_period = 250000  # agent steps
 #       the experiments we have ran, we have found that using Adam yields
 #       improved training performance.
 JaxDQNAgent.optimizer = 'adam'
+# Empty list allows all.
+JaxDQNAgent.collector_allowlist = []
 create_optimizer.learning_rate = 6.25e-5
 create_optimizer.eps = 1.5e-4
 
