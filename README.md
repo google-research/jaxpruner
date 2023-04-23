@@ -1,7 +1,7 @@
 # JaxPruner: a research library for sparsity research
 
 ## Introduction
-JaxPruner, an open-source JAX-based pruning and sparse training library for machine learning research.JaxPruner aims to accelerate research on sparse neural networks by providing concise implementations of popular  pruning  and  sparse  training  algorithms  with  minimal  memory  and  latency overhead.  Algorithms implemented in JaxPruner use a common API and work seamlessly with the popular optimization library Optax, which, in turn, enables easy integration with existing JAX based libraries.  We demonstrate this ease of integration by providing examples in three different codebases:  [scenic](https://github.com/google-research/scenic), [t5x](https://github.com/google-research/t5x) and [dopamine](https://github.com/google/dopamine).
+JaxPruner, an open-source JAX-based pruning and sparse training library for machine learning research. JaxPruner aims to accelerate research on sparse neural networks by providing concise implementations of popular  pruning  and  sparse  training  algorithms  with  minimal  memory  and  latency overhead.  Algorithms implemented in JaxPruner use a common API and work seamlessly with the popular optimization library Optax, which, in turn, enables easy integration with existing JAX based libraries.  We demonstrate this ease of integration by providing examples in three different codebases:  [scenic](https://github.com/google-research/scenic), [t5x](https://github.com/google-research/t5x) and [dopamine](https://github.com/google/dopamine).
 
 We believe a sparsity library in Jax has the potential to accelerate sparsity research. This is because:
 
@@ -38,14 +38,14 @@ pruner = jaxpruner.MagnitudePruning(is_packed=True) # Line 1: Reduces mask overh
 ## Installation
 First clone this repo.
 
-``
+```bash
 git clone https://github.com/google-research/jaxpruner.git
 cd jaxpruner
 ```
 
 Following script creates a virtual environment and installs the necessary libraries. Finally, it runs the tests.
 
-```
+```bash
 bash run.sh
 ```
 
