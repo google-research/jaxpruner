@@ -89,47 +89,50 @@ def uniform(
 def erk(
     param_tree,
     sparsity,
-    filter_fn = NOT_DIM_ONE_FILTER_FN,
-    custom_sparsity_map = None,
+    filter_fn=NOT_DIM_ONE_FILTER_FN,
+    custom_sparsity_map=None,
+    include_excluded_params=False,
 ):
-  """Allocate the sparsity to variables according to erdos-renyl method.
+    """Allocate the sparsity to variables according to erdos-renyl method.
 
-  Args:
-    param_tree: PyTree, of parameters.
-    sparsity: float, in [0, 1). fraction of weights to be removed.
-    filter_fn: used to decide whether to include the parameter in sparsity
-      calculation. Default is a function that returns true whenever the key[-1]
-      == 'kernel'.
-    custom_sparsity_map: A dictionary with variable name in tree map as a key
-      and sparsity value as a value. This is to assign specific sparsity to
-      specific variables.
+    Args:
+        param_tree: PyTree, of parameters.
+        sparsity: float, in [0, 1). fraction of weights to be removed.
+        filter_fn: used to decide whether to include the parameter in sparsity
+            calculation. Default is a function that returns true whenever the key[-1]
+            == 'kernel'.
+        custom_sparsity_map: A dictionary with variable name in tree map as a key
+            and sparsity value as a value. This is to assign specific sparsity to
+            specific variables.
+        include_excluded_params: bool, whether to include excluded params in the
+            sparsity calculations. Default is False.
 
-  Returns:
-    sparsity_tree: same shape as param_tree with float or None leaves.
-      For leaves with filter_fn(key, param)==False, None values are used.
-  """
-  # TODO: Add support for including excluded params in the calculations.
-  if isinstance(param_tree, (chex.Array, chex.ArrayNumpy)):
-    raise ValueError(
-        'Single parameter is provided. Please provide a paramater tree.'
+    Returns:
+        sparsity_tree: same shape as param_tree with float or None leaves.
+        For leaves with filter_fn(key, param)==False, None values are used.
+    """
+    if isinstance(param_tree, (chex.Array, chex.ArrayNumpy)):
+        raise ValueError(
+            "Single parameter is provided. Please provide a parameter tree."
+        )
+
+    flat_dict = flax.traverse_util.flatten_dict(param_tree)
+    filtered_shape_dict = {
+        k: p.shape
+        for k, p in flat_dict.items()
+        if filter_fn(k, p) or (include_excluded_params and not filter_fn(k, p))
+    }
+
+    sparsities = get_sparsities_erdos_renyi(
+        filtered_shape_dict, sparsity, custom_sparsity_map
     )
-
-  flat_dict = flax.traverse_util.flatten_dict(param_tree)
-  filtered_shape_dict = {
-      k: p.shape for k, p in flat_dict.items() if filter_fn(k, p)
-  }
-
-  sparsities = get_sparsities_erdos_renyi(
-      filtered_shape_dict, sparsity, custom_sparsity_map
-  )
-  res_dict = {
-      k: sparsities[k] if k in sparsities else None
-      for k, p in flat_dict.items()
-  }
-  return_val = flax.traverse_util.unflatten_dict(res_dict)
-  if isinstance(param_tree, flax.core.frozen_dict.FrozenDict):
-    return_val = flax.core.freeze(return_val)
-  return return_val
+    res_dict = {
+        k: sparsities[k] if k in sparsities else None for k, p in flat_dict.items()
+    }
+    return_val = flax.traverse_util.unflatten_dict(res_dict)
+    if isinstance(param_tree, flax.core.frozen_dict.FrozenDict):
+        return_val = flax.core.freeze(return_val)
+    return return_val
 
 
 def get_n_zeros(size, sparsity):
