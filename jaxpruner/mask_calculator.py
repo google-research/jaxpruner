@@ -159,8 +159,11 @@ def topk_n_by_m_mask_calculator(
     raise ValueError(
         f'N({n}) must be <= M({m}) in N({n}):M({m}) structured sparsity.'
     )
-  # TODO: Raise ValueError if size(scores) is not divisible by M.
   length = jnp.size(scores)
+  if length % m != 0:
+    raise ValueError(
+        f'size(scores) ({length}) is not divisible by M ({m})'
+    )
   group = int(length / m)
   scores_temp = scores.reshape(group, m, order='C')
   # Calling argsort twice calculates ranks for each element at each row.
