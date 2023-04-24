@@ -29,10 +29,10 @@ class DqnAgentPruner(dqn_agent.JaxDQNAgent):
   """A JAX implementation of the DQN+Pruner agent."""
 
   def _build_networks_and_optimizer(self):
-    self._rng, rng = jax.random.split(self._rng)
-    self.online_params = self.network_def.init(rng, x=self.state)
+    self._rng, init_rng, updater_rng = jax.random.split(self._rng, num=3)
+    self.online_params = self.network_def.init(init_rng, x=self.state)
     self.optimizer = dqn_agent.create_optimizer(self._optimizer_name)
-    self.updater = sparse_util.create_updater_from_config(sparsity=0.9)
+    self.updater = sparse_util.create_updater_from_config(rng_seed=updater_rng)
     self.optimizer = self.updater.wrap_optax(self.optimizer)
     self.optimizer_state = self.optimizer.init(self.online_params)
     self.target_network_params = self.online_params

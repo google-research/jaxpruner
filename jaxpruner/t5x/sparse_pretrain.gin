@@ -13,6 +13,10 @@ from jaxpruner.t5x import optimizers_wrapper
 train_script.train.trainer_cls = @sparse_trainer.SparseTrainer
 
 OPTIMIZER = @optimizers_wrapper.SparseOptaxWrapper()
+# This is needed so that default jax.random seed is used. Without this, 
+# hardware seed is used which has 4 integers.
+# TODO Ensure the seed is passed to the jaxpruner algorithms.
+RANDOM_SEED = 8
 
 optimizers_wrapper.SparseOptaxWrapper:
     optax_optimizer = @optimizers_wrapper.chain()
@@ -23,7 +27,7 @@ sparse_trainer.SparseTrainer:
   learning_rate_fn = @utils.create_learning_rate_scheduler()
 
 
-sparse_util.create_updater_from_config:
+config_util.create_updater_from_config:
   pruner_type = 'magnitude'
   dist_type = 'erk'
   update_end_step = 75_000

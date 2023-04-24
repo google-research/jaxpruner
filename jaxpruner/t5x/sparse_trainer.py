@@ -51,19 +51,25 @@ def train_with_lr(
     dropout_rng,
     model,
     num_microbatches,
-    sparsity_updater,
     weight_metrics_computer = None,
     data_partition_spec = PartitionSpec("data")):
   """Main training function with LR schedule."""
+  # pytype: disable=attribute-error
+  sparsity_updater = model.optimizer_def.sparsity_updater
+  # pytype: enable=attribute-error
+  forward_params = sparsity_updater.pre_forward_update(
+      train_state.params, train_state.param_states
+  )
+  forward_train_state = train_state.replace_params(forward_params)
 
-  new_params = sparsity_updater.pre_forward_update(
-      train_state.params, train_state.param_states)
-  train_state = train_state.replace_params(new_params)
-
-  grad_accum, metrics, flax_mutables = (
-      trainer.accumulate_grads_microbatched(
-          model, train_state, batch, dropout_rng,
-          num_microbatches, data_partition_spec))
+  grad_accum, metrics, flax_mutables = trainer.accumulate_grads_microbatched(
+      model,
+      forward_train_state,
+      batch,
+      dropout_rng,
+      num_microbatches,
+      data_partition_spec,
+  )
   new_train_state, metrics = trainer.apply_grads(
       train_state,
       grad_accum,
@@ -72,11 +78,37 @@ def train_with_lr(
       weight_metrics_computer,
       other_state_variables={"flax_mutables": flax_mutables}
       if flax_mutables else None)
-  sparsity_metrics = {k: clu.metrics.Average.from_model_output(v) for k, v
-                      in jaxpruner.summarize_sparsity(
-                          new_train_state.params).items()}
+  sparsity_metrics = {
+      k: clu.metrics.Average.from_model_output(v)
+      for k, v in jaxpruner.summarize_sparsity(forward_params).items()
+  }
   metrics.update(sparsity_metrics)
   return new_train_state, metrics
+
+
+def eval_step(
+    model,
+    train_state,
+    batch,
+):
+  """Default evaluation step."""
+  # pytype: disable=attribute-error
+  sparsity_updater = model.optimizer_def.sparsity_updater
+  # pytype: enable=attribute-error
+  forward_params = sparsity_updater.pre_forward_update(
+      train_state.params, train_state.param_states
+  )
+  if not train_state.flax_mutables:
+    _, metrics = model.eval_fn(forward_params, batch)  # pytype: disable=wrong-arg-types  # jax-ndarray
+  else:
+    # If the training state contains mutable variables, then we expect the
+    # model to accept this extra arguments in the eval function.
+    # pytype: disable=wrong-arg-count
+    # pytype: disable=wrong-arg-types
+    _, metrics = model.eval_fn(forward_params, batch, train_state.flax_mutables)
+    # pytype: enable=wrong-arg-count
+    # pytype: enable=wrong-arg-types
+  return metrics
 
 
 class SparseTrainer(trainer.Trainer):
@@ -84,11 +116,7 @@ class SparseTrainer(trainer.Trainer):
 
   @cached_property
   def _partitioned_train_step(self):
-
     def train_step(train_state, batch):
-      # pytype: disable=attribute-error
-      sparsity_updater = self._model.optimizer_def.sparsity_updater
-      # pytype: enable=attribute-error
       return train_with_lr(
           train_state,
           batch,
@@ -98,7 +126,7 @@ class SparseTrainer(trainer.Trainer):
           num_microbatches=self._num_microbatches,
           weight_metrics_computer=self._weight_metrics_computer,
           data_partition_spec=self._partitioner.data_partition_spec,
-          sparsity_updater=sparsity_updater)
+      )
 
     return self._partitioner.partition(
         train_step,
@@ -106,3 +134,14 @@ class SparseTrainer(trainer.Trainer):
                            self._partitioner.data_partition_spec),
         out_axis_resources=(self._train_state_axes, None),
         donate_argnums=(0,))
+
+  @cached_property
+  def _partitioned_eval_step(self):
+    return self._partitioner.partition(
+        lambda *args, **kwargs: eval_step(self._model, *args, **kwargs),
+        in_axis_resources=(
+            self._train_state_axes,
+            self._partitioner.data_partition_spec,
+        ),
+        out_axis_resources=None,
+    )

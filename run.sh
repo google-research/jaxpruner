@@ -20,7 +20,7 @@ set -x
 virtualenv -p python3 env
 source env/bin/activate
 
-pip install -r jaxpruner/requirements.txt
+pip install -r requirements.txt
 python -m jaxpruner.base_updater_test
 python -m jaxpruner.mask_calculator_test
 python -m jaxpruner.sparsity_distributions_test

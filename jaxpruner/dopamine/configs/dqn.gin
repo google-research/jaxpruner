@@ -27,7 +27,7 @@ JaxDQNAgent.collector_allowlist = []
 create_optimizer.learning_rate = 6.25e-5
 create_optimizer.eps = 1.5e-4
 
-atari_lib.create_atari_environment.game_name = 'Pong'
+atari_lib.create_atari_environment.game_name = 'MsPacman'
 # Sticky actions with probability 0.25, as suggested by (Machado et al., 2017).
 atari_lib.create_atari_environment.sticky_actions = True
 create_agent.agent_name = 'jaxpruner_dqn'
@@ -42,6 +42,11 @@ create_updater_from_config.dist_type='erk'
 create_updater_from_config.update_start_step=500000
 create_updater_from_config.update_end_step=2000000
 create_updater_from_config.update_freq=1000
+# Use these for dynamic sparse training algorithms.
+# create_updater_from_config.update_start_step=1
+# create_updater_from_config.update_freq=5000
+# create_updater_from_config.drop_fracion=0.3
+create_updater_from_config.sparsity=0.98
 
 OutOfGraphReplayBuffer.replay_capacity = 1000000
 OutOfGraphReplayBuffer.batch_size = 32

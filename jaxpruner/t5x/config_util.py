@@ -23,9 +23,9 @@ import ml_collections
 def create_updater_from_config(
     pruner_type='magnitude',
     dist_type='erk',
-    update_end_step=3,
-    update_freq=1,
-    update_start_step=None,
+    update_end_step=1,
+    update_freq=1000,
+    update_start_step=1,
     sparsity=None,
 ):
   """Gin based wrapper around jaxpruner create function."""

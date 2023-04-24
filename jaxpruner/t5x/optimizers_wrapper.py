@@ -23,8 +23,6 @@ Additional support for the legacy Adafactor implementation.
 
 from typing import Optional, Sequence
 
-from flax import serialization
-from flax.core import frozen_dict
 import jax
 
 from jaxpruner import base_updater
@@ -102,32 +100,6 @@ class SparseOptaxWrapper(OptaxWrapper):
     return new_params, OptimizerState(
         step=state.step + 1, param_states=new_optax_state
     )
-
-  def derive_logical_axes(self, optimizer, param_logical_axes):
-    """Derives optimizer state logical axes from params logical axes.
-
-    Args:
-      optimizer: `optimizers.Optimizer` instance.
-      param_logical_axes: A PyTree where each leaf is a t5x PartitionSpec.
-
-    Returns:
-      An `optimizers.Optimizer` instance, with all the leafs replaced by t5x
-      PartitionSpec or None (no partition).
-    """
-    optimizer_logical_axes = jax.tree_map(
-        lambda x: None, optimizer.state_dict()
-    )
-    optimizer_logical_axes['target'] = param_logical_axes
-
-    optax_state_axes = OptaxStatePartitionRules.derive_optax_logical_axes(
-        optimizer.state.param_states, param_logical_axes
-    )
-
-    optimizer_logical_axes['state']['param_states'] = (
-        serialization.to_state_dict(optax_state_axes)
-    )
-
-    return optimizer.restore_state(frozen_dict.unfreeze(optimizer_logical_axes))
 
 
 def chain(

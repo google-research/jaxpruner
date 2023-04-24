@@ -27,8 +27,12 @@ def create_updater_from_config(
     update_freq=1000,
     update_start_step=20000,
     sparsity=0.95,
+    drop_fraction=0.1,
+    rng_seed=8,
 ):
   """Gin based wrapper around jaxpruner create function."""
+  if 'ste' in pruner_type:
+    raise ValueError('STE is currently not supported.')
   sparsity_config = ml_collections.ConfigDict()
   sparsity_config.algorithm = pruner_type
   sparsity_config.dist_type = dist_type
@@ -36,4 +40,7 @@ def create_updater_from_config(
   sparsity_config.update_freq = update_freq
   sparsity_config.update_start_step = update_start_step
   sparsity_config.sparsity = sparsity
+  sparsity_config.rng_seed = rng_seed
+  # Used only by rigl and set algorithms.
+  sparsity_config.drop_fraction = drop_fraction
   return api.create_updater_from_config(sparsity_config)
