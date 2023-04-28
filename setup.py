@@ -32,9 +32,7 @@ setup(
     url="https://github.com/google-research/jaxpruner",
     license="Apache 2.0",
     packages = find_packages(
-        where='jaxpruner',
-        include=['algorithms*'],
-        exclude=['*test.py'],
+        exclude=['*test.py', 'algorithms/*.py'],
     ),
     zip_safe=False,
     install_requires=[
