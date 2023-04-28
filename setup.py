@@ -38,7 +38,7 @@ setup(
     zip_safe=False,
     install_requires=[
       "chex",
-      "flax,
+      "flax",
       "jax",
       "jaxlib",
       "optax",
