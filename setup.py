@@ -33,7 +33,8 @@ setup(
     license="Apache 2.0",
     packages = find_packages(
         where='jaxpruner',
-        exclude=['t5x*', 'dopamine*', 'scenic', 'fedjax']
+        include=['algorithms*'],
+        exclude=['*test.py'],
     ),
     zip_safe=False,
     install_requires=[
