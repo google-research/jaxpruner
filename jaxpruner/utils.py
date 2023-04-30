@@ -50,7 +50,6 @@ def summarize_sparsity(
       summary_dict = dict([(str(k), v) for (k, v) in enumerate(sparsities)])
     else:
       summary_dict = flax.traverse_util.flatten_dict(sparsities, sep='/')
-
   total_sparsity = sparsity_fn(
       sum(jax.tree_util.tree_leaves(non_zeros)),
       sum(jax.tree_util.tree_leaves(sizes)),

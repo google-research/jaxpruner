@@ -52,13 +52,25 @@ bash run.sh
 ```
 
 ## Quickstart
-See our Quickstart colab (coming soon).
+See our Quickstart colab:
+[![Quick Start Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google-research/jaxpruner/blob/main/colabs/quick_start.ipynb)
+
+Feel free to check our ![Deep-Dive](https://colab.research.google.com/github/google-research/jaxpruner/blob/main/colabs/deep_dive.ipynb) and ![Mnist Pruning](https://colab.research.google.com/github/google-research/jaxpruner/blob/main/colabs/mnist_pruning.ipynb) colabs.
 
 ## Baselines
-We will share our baseline experiments here shortly.
-
+|        |   no_prune |     random |   magnitude |   saliency |   global_magnitude |   magnitude_ste |   static_sparse |        set |       rigl |
+|:-------|-----------:|-----------:|------------:|-----------:|-------------------:|----------------:|----------------:|-----------:|-----------:|
+| ResNet-50 |   76.67    |   70.192   |    75.532   |   74.93    |           75.486   |         73.542  |        71.344   |   74.566   |   74.752   |
+| ViT-B/16 (90ep)  |   74.044   |   69.756   |    72.892   |   72.802   |           73.598   |         74.208  |        64.61    |   70.982   |   71.582   |
+| ViT-B/16 (300ep) |   74.842   |   73.428   |    75.734   |   75.95    |           75.652   |         76.128  |        70.168   |   75.616   |   75.64    |
+| Fed. MNIST    |  86.21 |  83.53      |     85.74             |       85.60          |     86.01             |     86.16       |   83.33   |     84.20 |  84.64 |
+| t5-Base (C4)   |    2.58399 |    3.28813 |     2.95402 |    3.52233 |            5.43968 |          2.7124 |         3.17343 |    3.13115 |    3.12403 |
+| DQN-CNN (MsPacman)    | 2588.82    | 1435.29    |  2123.83    |  -       |         2322.21    |        -      |      1156.69    | 1723.3     | 1535.19    |
 ## Citation
-Work in Progress
-
+@inproceedings{jaxpruner,
+  title={JaxPruner: A concise library for sparsity research},
+  author={Joo Hyung Lee and Wonpyo Park and Nicole Mitchell and Jonathan Pilault and Johan S. Obando-Ceron and Han-Byul Kim and Namhoon Lee and Elias Frantar and Yun Long and Amir Yazdanbakhsh and Shivani Agrawal and Suvinay Subramanian and Xin Wang and Sheng-Chun Kao and Xingyao Zhang and Trevor Gale and Aart J. C. Bik and Woohyun Han and Milen Ferev and Zhonglin Han and Hong-Seok Kim and Yann Dauphin and Karolina Dziugaite and Pablo Samuel Castro and Utku Evci},
+  year={2023}
+}
 ## Disclaimer
 This is not an officially supported Google product.
