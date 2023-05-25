@@ -5,9 +5,9 @@ import optax
 
 from t5x import utils
 
-from jaxpruner.t5x import config_util
-from jaxpruner.t5x import sparse_trainer
-from jaxpruner.t5x import optimizers_wrapper
+from jaxpruner.baselines.t5x import config_util
+from jaxpruner.baselines.t5x import sparse_trainer
+from jaxpruner.baselines.t5x import optimizers_wrapper
 
 
 train_script.train.trainer_cls = @sparse_trainer.SparseTrainer

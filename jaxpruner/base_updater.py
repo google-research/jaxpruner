@@ -148,7 +148,7 @@ class BaseUpdater(object):
     def mask_fn(p, target):
       if target is None:
         return None
-      return jnp.ones_like(p, dtype=mask_calculator.MASK_DTYPE)
+      return jnp.ones(p.shape, dtype=mask_calculator.MASK_DTYPE)
 
     masks = jax.tree_map(mask_fn, params, target_sparsities)
     return masks
@@ -315,7 +315,9 @@ class BaseUpdater(object):
     Returns:
       A tree of pruned parameters.
     """
-    return self.apply_masks(params, sparse_state.masks)
+    return self.apply_masks(
+        params, sparse_state.masks, is_packed=self.use_packed_masks
+    )
 
 
 @dataclasses.dataclass

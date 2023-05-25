@@ -14,14 +14,61 @@
 # limitations under the License.
 
 """Implementation of a DQN+Prunner agent in JAX."""
+import functools
+from dopamine.jax import losses
 from dopamine.jax.agents.dqn import dqn_agent
 from dopamine.metrics import statistics_instance
 import gin
 import jax
+import jax.numpy as jnp
 from jaxpruner import utils
-from jaxpruner.dopamine import sparse_util
-
+from jaxpruner.baselines.dopamine import sparse_util
 import numpy as onp
+import optax
+
+
+@functools.partial(jax.jit, static_argnums=(0, 4, 11, 12))
+def train(
+    network_def,
+    online_params,
+    forward_params,
+    target_params,
+    optimizer,
+    optimizer_state,
+    states,
+    actions,
+    next_states,
+    rewards,
+    terminals,
+    cumulative_gamma,
+    loss_type,
+):
+  """Run the training step."""
+
+  def loss_fn(params, target):
+    def q_online(state):
+      return network_def.apply(params, state)
+
+    q_values = jax.vmap(q_online)(states).q_values
+    q_values = jnp.squeeze(q_values)
+    replay_chosen_q = jax.vmap(lambda x, y: x[y])(q_values, actions)
+    if loss_type == 'huber':
+      return jnp.mean(jax.vmap(losses.huber_loss)(target, replay_chosen_q))
+    return jnp.mean(jax.vmap(losses.mse_loss)(target, replay_chosen_q))
+
+  def q_target(state):
+    return network_def.apply(target_params, state)
+
+  target = dqn_agent.target_q(
+      q_target, next_states, rewards, terminals, cumulative_gamma
+  )
+  grad_fn = jax.value_and_grad(loss_fn)
+  loss, grad = grad_fn(forward_params, target)
+  updates, optimizer_state = optimizer.update(
+      grad, optimizer_state, params=online_params
+  )
+  online_params = optax.apply_updates(online_params, updates)
+  return optimizer_state, online_params, loss
 
 
 @gin.configurable
@@ -33,6 +80,8 @@ class DqnAgentPruner(dqn_agent.JaxDQNAgent):
     self.online_params = self.network_def.init(init_rng, x=self.state)
     self.optimizer = dqn_agent.create_optimizer(self._optimizer_name)
     self.updater = sparse_util.create_updater_from_config(rng_seed=updater_rng)
+    self.post_gradient_update = jax.jit(self.updater.post_gradient_update)
+    self.pre_forward_update = jax.jit(self.updater.pre_forward_update)
     self.optimizer = self.updater.wrap_optax(self.optimizer)
     self.optimizer_state = self.optimizer.init(self.online_params)
     self.target_network_params = self.online_params
@@ -54,9 +103,13 @@ class DqnAgentPruner(dqn_agent.JaxDQNAgent):
         self._sample_from_replay_buffer()
         states = self.preprocess_fn(self.replay_elements['state'])
         next_states = self.preprocess_fn(self.replay_elements['next_state'])
-        self.optimizer_state, self.online_params, loss = dqn_agent.train(
+        forward_params = self.pre_forward_update(
+            self.online_params, self.optimizer_state
+        )
+        self.optimizer_state, self.online_params, loss = train(
             self.network_def,
             self.online_params,
+            forward_params,
             self.target_network_params,
             self.optimizer,
             self.optimizer_state,
@@ -68,12 +121,11 @@ class DqnAgentPruner(dqn_agent.JaxDQNAgent):
             self.cumulative_gamma,
             self._loss_type,
         )
-
-        self.online_params = self.updater.post_gradient_update(
+        self.online_params = self.post_gradient_update(
             self.online_params, self.optimizer_state
         )
         total_sparsity = utils.summarize_sparsity(
-            self.online_params, only_total_sparsity=True
+            forward_params, only_total_sparsity=True
         )
         if (
             self.training_steps > 0

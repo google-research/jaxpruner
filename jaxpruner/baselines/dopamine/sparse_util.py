@@ -31,8 +31,6 @@ def create_updater_from_config(
     rng_seed=8,
 ):
   """Gin based wrapper around jaxpruner create function."""
-  if 'ste' in pruner_type:
-    raise ValueError('STE is currently not supported.')
   sparsity_config = ml_collections.ConfigDict()
   sparsity_config.algorithm = pruner_type
   sparsity_config.dist_type = dist_type

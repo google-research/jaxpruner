@@ -36,7 +36,7 @@ from absl import logging
 
 from dopamine.discrete_domains import run_experiment
 import gin
-from jaxpruner.dopamine import dqn_agent_pruner
+from jaxpruner.baselines.dopamine import dqn_agent_pruner
 
 import tensorflow.compat.v2 as tf
 

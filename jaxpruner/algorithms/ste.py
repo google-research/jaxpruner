@@ -18,8 +18,9 @@
 Reference: https://arxiv.org/abs/1308.3432
 """
 import dataclasses
-
+from typing import Optional
 import chex
+import jax
 from jaxpruner import base_updater
 from jaxpruner.algorithms import pruners
 
@@ -38,6 +39,17 @@ class SteMixin:
     scores = self.calculate_scores(params, sparse_state=opt_state)
     new_masks = self.create_masks(scores, sparsities)
     return self.apply_masks(params, new_masks, is_packed=False)
+
+  def get_initial_masks(
+      self, params, target_sparsities
+  ):
+    del target_sparsities
+    return jax.tree_map(lambda p: None, params)
+
+  def update_state(self, sparse_state, params, grads):
+    """Identity operation, returns the state unmodified."""
+    del params, grads
+    return sparse_state
 
   def post_gradient_update(
       self, params, opt_state

@@ -71,6 +71,12 @@ def get_config(config_string=''):
   config.sparsity_config.update_start_step = 10_000
   config.sparsity_config.update_end_step = 20_000
   config.sparsity_config.drop_fraction = 0.1
+  def custom_filter_fn(key, param):
+    return (
+        (param.ndim > 1) and ('pos_embedding' not in key) and ('cls' not in key)
+    )
+
+  config.sparsity_config.filter_fn = custom_filter_fn
   config.sparsity_config.sparsity = 0.8
   config.sparsity_config.dist_type = 'erk'
 

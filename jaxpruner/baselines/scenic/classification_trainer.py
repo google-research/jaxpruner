@@ -140,11 +140,11 @@ def train_step(
   if config.get('max_grad_norm') is not None:
     grad = clip_grads(grad, config.max_grad_norm)
 
-  updates, new_opt_state = train_state.tx.update(
+  updates, new_opt_state = train_state.tx.update(  # pytype: disable=attribute-error
       grad, train_state.opt_state, train_state.params
   )
   new_params = optax.apply_updates(train_state.params, updates)
-  new_params = updater.post_gradient_update(new_params, new_opt_state)
+  new_params = updater.post_gradient_update(new_params, new_opt_state)  # pytype: disable=wrong-arg-types
 
   training_logs['l2_grads'] = jnp.sqrt(
       sum([jnp.vdot(g, g) for g in jax.tree_util.tree_leaves(grad)])
@@ -162,7 +162,7 @@ def train_step(
   us = jax.tree_util.tree_leaves(updates)
   training_logs['l2_updates'] = jnp.sqrt(sum([jnp.vdot(u, u) for u in us]))
   # TODO: Can we get this from the optimizer instead?
-  training_logs['learning_rate'] = lr_fn(train_state.global_step)
+  training_logs['learning_rate'] = lr_fn(train_state.global_step)  # pytype: disable=wrong-arg-types
 
   metrics = metrics_fn(logits, batch)
 
@@ -469,4 +469,5 @@ def train(
   # Wait until computations are done before exiting.
   train_utils.barrier_across_hosts()
   # Return the train and eval summary after last step for regression testing.
-  return train_state, train_summary, eval_summary
+  # TODO Understand why return type fails and fix.
+  return train_state, train_summary, eval_summary  # pytype: disable=bad-return-type

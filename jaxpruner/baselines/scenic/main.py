@@ -21,7 +21,7 @@ from clu import metric_writers
 from flax.training import checkpoints
 import jax
 import jax.numpy as jnp
-from jaxpruner.scenic import classification_trainer
+from jaxpruner.baselines.scenic import classification_trainer
 import ml_collections
 from scenic import app
 from scenic.model_lib import models

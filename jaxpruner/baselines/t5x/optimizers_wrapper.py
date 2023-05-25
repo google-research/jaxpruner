@@ -94,7 +94,7 @@ class SparseOptaxWrapper(OptaxWrapper):
     )
     new_params = optax.apply_updates(params, updates)
     if self.sparsity_updater:
-      new_params = self.sparsity_updater.post_gradient_update(
+      new_params = self.sparsity_updater.post_gradient_update(  # pytype: disable=wrong-arg-types
           new_params, new_optax_state
       )
     return new_params, OptimizerState(

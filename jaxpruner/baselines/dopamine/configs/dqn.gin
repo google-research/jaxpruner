@@ -5,7 +5,7 @@ import dopamine.discrete_domains.atari_lib
 import dopamine.discrete_domains.run_experiment
 import dopamine.jax.agents.dqn.dqn_agent
 import dopamine.replay_memory.circular_replay_buffer
-import jaxpruner.dopamine.sparse_util
+import jaxpruner.baselines.dopamine.sparse_util
 
 
 JaxDQNAgent.gamma = 0.99
