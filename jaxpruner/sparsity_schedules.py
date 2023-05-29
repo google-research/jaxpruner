@@ -22,7 +22,7 @@ import jax
 import jax.numpy as jnp
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class NoUpdateSchedule(object):
   """Implements no update scheduler."""
 
@@ -39,7 +39,7 @@ class NoUpdateSchedule(object):
     return False
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class OneShotSchedule(NoUpdateSchedule):
   """Implements one shot update schedule."""
 
@@ -49,7 +49,7 @@ class OneShotSchedule(NoUpdateSchedule):
     return step == self.target_step
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class PeriodicSchedule(NoUpdateSchedule):
   """Implements periodic update schedule."""
 
@@ -70,7 +70,7 @@ class PeriodicSchedule(NoUpdateSchedule):
     return is_update_step
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class PolynomialSchedule(PeriodicSchedule):
   """Extends periodic schedule with polynomial sparsity schedule."""
 

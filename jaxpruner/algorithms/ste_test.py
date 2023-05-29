@@ -42,9 +42,7 @@ class STETest(parameterized.TestCase, absltest.TestCase):
     opt_state = optimizer.init(params)
 
     updater.calculate_scores = mock.MagicMock(wraps=updater.calculate_scores)
-    updater.scheduler.get_sparsity_at_step = mock.MagicMock(
-        wraps=updater.scheduler.get_sparsity_at_step
-    )
+    updater.scheduler = mock.MagicMock(wraps=updater.scheduler)
     for _ in range(10):
       pruned_params = updater.pre_forward_update(params, opt_state)
 
