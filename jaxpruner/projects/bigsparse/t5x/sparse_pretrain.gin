@@ -5,9 +5,9 @@ import optax
 
 from t5x import utils
 
-from jaxpruner.baselines.t5x import config_util
 from jaxpruner.baselines.t5x import sparse_trainer
 from jaxpruner.baselines.t5x import optimizers_wrapper
+from jaxpruner.projects.bigsparse.t5x import config_util
 
 utils.SaveCheckpointConfig:
   period = 2000
@@ -36,7 +36,7 @@ config_util.create_updater_from_config:
   pruner_type = 'magnitude'
   dist_type = 'erk'
   update_end_step = 75_000
-  update_freq = 1000
+  update_freq = 5
   update_start_step = 25_000
   sparsity = 0.8
 

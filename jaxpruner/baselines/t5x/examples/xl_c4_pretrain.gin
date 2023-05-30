@@ -1,8 +1,8 @@
 from __gin__ import dynamic_registration
 import __main__ as train_script
 
-include 'third_party/py/t5x/examples/t5/t5_1_1/xl.gin'
-include 'third_party/py/t5x/configs/runs/pretrain.gin'
+include 't5x/examples/t5/t5_1_1/xl.gin'
+include 't5x/configs/runs/pretrain.gin'
 
 # Register necessary SeqIO Tasks/Mixtures.
 import t5.data.mixtures

@@ -80,7 +80,9 @@ def train_with_lr(
       if flax_mutables else None)
   sparsity_metrics = {
       k: clu.metrics.Average.from_model_output(v)
-      for k, v in jaxpruner.summarize_sparsity(forward_params).items()
+      for k, v in jaxpruner.summarize_sparsity(
+          forward_params, only_total_sparsity=True
+      ).items()
   }
   metrics.update(sparsity_metrics)
   return new_train_state, metrics
