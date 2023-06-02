@@ -45,7 +45,7 @@ def uniform(
   """Uniformly distribute the target sparsity to variables.
 
   Args:
-    params: paramater or tree of parameters.
+    params: parameter or tree of parameters.
     sparsity: float, in [0, 1). fraction of weights to be removed from pruned
       parameters (i.e. filter_fn(param) == True).
     filter_fn: used to decide whether to include the parameter in sparsity
@@ -111,7 +111,7 @@ def erk(
   # TODO: Add support for including excluded params in the calculations.
   if isinstance(param_tree, (chex.Array, chex.ArrayNumpy)):
     raise ValueError(
-        'Single parameter is provided. Please provide a paramater tree.'
+        'Single parameter is provided. Please provide a parameter tree.'
     )
 
   flat_dict = flax.traverse_util.flatten_dict(param_tree)
