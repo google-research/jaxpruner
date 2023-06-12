@@ -1,0 +1,57 @@
+from __gin__ import dynamic_registration
+import __main__ as train_script
+
+include 't5x/configs/runs/pretrain.gin'
+
+# Register necessary SeqIO Tasks/Mixtures.
+import t5.data.mixtures
+import seqio
+from t5x import models
+from t5x.examples.t5 import network
+from jaxpruner.projects.bigsparse.t5x import network as jp_network
+
+# ------------------- Loss HParam ----------------------------------------------
+Z_LOSS = 0.0001
+LABEL_SMOOTHING = 0.0
+# NOTE: When fine-tuning the public T5 checkpoints (trained in T5 MeshTF)
+# the loss normalizing factor should be set to pretraining batch_size *
+# target_token_length.
+LOSS_NORMALIZING_FACTOR = None
+# Dropout and width should be specified in the "run" files
+DROPOUT_RATE = 0.0
+NETWORK_WIDTH = %gin.REQUIRED
+
+MIXTURE_OR_TASK_NAME = "c4_v220_span_corruption"
+TASK_FEATURE_LENGTHS = {"inputs": 512, "targets": 114}
+
+# Vocabulary (shared by encoder and decoder)
+VOCABULARY = @seqio.SentencePieceVocabulary()
+seqio.SentencePieceVocabulary.sentencepiece_model_file = "gs://t5-data/vocabs/cc_all.32000.100extra/sentencepiece.model"
+
+# ------------------- Model ----------------------------------------------------
+MODEL = @models.EncoderDecoderModel()
+models.EncoderDecoderModel:
+  module = @jp_network.TransformerW()
+  input_vocabulary = %VOCABULARY
+  output_vocabulary = %VOCABULARY
+  optimizer_def = %OPTIMIZER
+  z_loss = %Z_LOSS
+  label_smoothing = %LABEL_SMOOTHING
+  loss_normalizing_factor = %LOSS_NORMALIZING_FACTOR
+
+# ------------------- Network specification ------------------------------------
+jp_network.TransformerW.config = @network.T5Config()
+jp_network.TransformerW.width = %NETWORK_WIDTH
+
+network.T5Config:
+  vocab_size = 32128  # vocab size rounded to a multiple of 128 for TPU efficiency
+  dtype = 'bfloat16'
+  emb_dim = 64
+  num_heads = 1 
+  num_encoder_layers = 8
+  num_decoder_layers = 8
+  head_dim = 64
+  mlp_dim = 128
+  mlp_activations = ('gelu', 'linear')
+  dropout_rate = %DROPOUT_RATE
+  logits_via_embedding = False

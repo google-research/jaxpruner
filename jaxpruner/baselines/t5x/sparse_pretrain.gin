@@ -12,7 +12,7 @@ from jaxpruner.baselines.t5x import optimizers_wrapper
 utils.SaveCheckpointConfig:
   period = 2000
   dtype = 'float32'
-  keep = 5  # keep all checkpoints
+  keep = 3  # keep all checkpoints
   save_dataset = False  # don't checkpoint dataset state
 
 train_script.train.trainer_cls = @sparse_trainer.SparseTrainer

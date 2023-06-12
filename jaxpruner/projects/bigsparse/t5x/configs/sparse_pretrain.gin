@@ -9,19 +9,26 @@ from jaxpruner.baselines.t5x import sparse_trainer
 from jaxpruner.baselines.t5x import optimizers_wrapper
 from jaxpruner.projects.bigsparse.t5x import config_util
 
+# TODO Ensure the seed is passed to the jaxpruner algorithms.
+RANDOM_SEED = 8
+TRAIN_STEPS = 20_000
+NETWORK_WIDTH = 1.
+BATCH_SIZE = 1024
+
+train_script.train:
+  eval_period = 2000
+  
 utils.SaveCheckpointConfig:
   period = 2000
   dtype = 'float32'
-  keep = 5  # keep all checkpoints
+  keep = 3  # keep all checkpoints
   save_dataset = False  # don't checkpoint dataset state
-
+  
 train_script.train.trainer_cls = @sparse_trainer.SparseTrainer
 
 OPTIMIZER = @optimizers_wrapper.SparseOptaxWrapper()
 # This is needed so that default jax.random seed is used. Without this, 
 # hardware seed is used which has 4 integers.
-# TODO Ensure the seed is passed to the jaxpruner algorithms.
-RANDOM_SEED = 8
 
 optimizers_wrapper.SparseOptaxWrapper:
     optax_optimizer = @optimizers_wrapper.chain()
@@ -34,10 +41,10 @@ sparse_trainer.SparseTrainer:
 
 config_util.create_updater_from_config:
   pruner_type = 'magnitude'
-  dist_type = 'erk'
-  update_end_step = 75_000
-  update_freq = 5
-  update_start_step = 25_000
+  dist_type = 'uniform'
+  update_end_step = 15_000
+  update_freq = 100
+  update_start_step = 5_000
   sparsity = 0.8
 
 optimizers_wrapper.chain:
@@ -55,10 +62,11 @@ optax.adamw:
   # learning rate scheduler, i.e., utils.create_learning_rate_scheduler, or
   # optax's native schedule functions, e.g., warmup_cosine_decay_schedule.
   learning_rate = @optax.warmup_cosine_decay_schedule()
+  weight_decay = 0.5
 
 optax.warmup_cosine_decay_schedule:
   init_value = 0.0
-  peak_value = 1e-4
+  peak_value = 4e-4
   warmup_steps = 1000
   decay_steps = %TRAIN_STEPS
   end_value = 0.0

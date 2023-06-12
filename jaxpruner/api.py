@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""This file contains apis to use the jax prunder libraries."""
+"""This file contains apis to use the JaxPruner libraries."""
 import copy
 import functools
 import logging
@@ -109,6 +109,15 @@ def create_updater_from_config(
       )
       config.sparsity_distribution_fn = new_fn
       del config.filter_fn
+
+  if config.get('custom_sparsity_map', None):
+    if not config.algorithm.startswith('global_'):
+      new_fn = functools.partial(
+          config.sparsity_distribution_fn,
+          custom_sparsity_map=config.custom_sparsity_map,
+      )
+      config.sparsity_distribution_fn = new_fn
+      del config.custom_sparsity_map
 
   if config.algorithm.startswith('global_'):
     # Distribution function is not used.

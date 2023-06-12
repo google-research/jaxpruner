@@ -55,6 +55,10 @@ def summarize_sparsity(
       sum(jax.tree_util.tree_leaves(sizes)),
   )
   summary_dict['_total_sparsity'] = total_sparsity
+  summary_dict['_nparams_nnz'] = jnp.float32(
+      sum(jax.tree_util.tree_leaves(non_zeros))
+  )
+  summary_dict['_nparams'] = jnp.float32(sum(jax.tree_util.tree_leaves(sizes)))
 
   return summary_dict
 

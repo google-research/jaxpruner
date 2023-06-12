@@ -31,7 +31,11 @@ class UtilsTest(parameterized.TestCase, absltest.TestCase):
             'e': jnp.zeros([2, 1]),
         },
     }
-    expected_summary = {'_total_sparsity': 0.3}
+    expected_summary = {
+        '_total_sparsity': 0.3,
+        '_nparams': 10.0,
+        '_nparams_nnz': 7.0,
+    }
     self.assertEqual(
         utils.summarize_sparsity(param_tree, only_total_sparsity=True),
         expected_summary,
@@ -39,6 +43,8 @@ class UtilsTest(parameterized.TestCase, absltest.TestCase):
 
     expected_summary = {
         '_total_sparsity': 0.3,
+        '_nparams': 10.0,
+        '_nparams_nnz': 7.0,
         'a': jnp.array([0]),
         'b/c': None,
         'b/d': jnp.array([0.25]),

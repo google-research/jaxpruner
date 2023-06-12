@@ -13,6 +13,7 @@ def create_updater_from_config(
     update_freq=1000,
     update_start_step=1,
     sparsity=None,
+    custom_sparsity_map=None,
 ):
   """Gin based wrapper around jaxpruner create function."""
   api.ALGORITHM_REGISTRY['magnitude_ste_eff'] = (
@@ -29,4 +30,10 @@ def create_updater_from_config(
   sparsity_config.update_freq = update_freq
   sparsity_config.update_start_step = update_start_step
   sparsity_config.sparsity = sparsity
+  def custom_filter_fn(key, param):
+    return (param.ndim > 1) and ('rel_embedding' not in key)
+
+  sparsity_config.filter_fn = custom_filter_fn
+  if custom_sparsity_map:
+    sparsity_config.custom_sparsity_map = custom_sparsity_map
   return api.create_updater_from_config(sparsity_config)

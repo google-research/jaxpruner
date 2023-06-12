@@ -14,10 +14,14 @@ import optax
 @dataclasses.dataclass
 class EffSteMixinV2:
   """Implements Mixin for straight through estimator.
-  
+
   This version uses the scaled gradients when calculating scores. This way, we
-  can get a more accurate masks for the next step. 
+  can get a more accurate masks for the next step.
+
+  Attributes:
+    mask_decay_coef: float, defines weight decay on pruned weights.
   """
+  mask_decay_coef = 0.0
 
   def pre_forward_update(
       self, params: chex.ArrayTree, sparse_state: base_updater.SparseState
@@ -57,6 +61,13 @@ class EffSteMixinV2:
       return sparse_state
 
     def update_fn(updates, state, params):
+      if self.mask_decay_coef != 0.0:
+        # SR-STE decay function.
+        def _decay_fn(param, grad, mask):
+          return grad + param * (1 - mask) * self.mask_decay_coef
+
+        updates = jax.tree_map(_decay_fn, params, updates, state.masks)
+
       new_updates, new_inner_state = inner.update(
           updates, state.inner_state, params
       )
