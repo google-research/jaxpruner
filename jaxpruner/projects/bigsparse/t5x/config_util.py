@@ -14,6 +14,7 @@ def create_updater_from_config(
     update_freq=1000,
     update_start_step=1,
     sparsity=None,
+    embed_sparsity=None,
     custom_sparsity_map=None,
     sparsity_type=None,
 ):
@@ -34,10 +35,21 @@ def create_updater_from_config(
   sparsity_config.update_freq = update_freq
   sparsity_config.update_start_step = update_start_step
   sparsity_config.sparsity = sparsity
+  if embed_sparsity:
+    no_prune_list = ['rel_embedding']
+  else:
+    no_prune_list = ['rel_embedding', 'logits_dense', 'token_embedder']
+
   def custom_filter_fn(key, param):
-    return (param.ndim > 1) and ('rel_embedding' not in key)
+    return (param.ndim > 1) and all((s not in key) for s in no_prune_list)
 
   sparsity_config.filter_fn = custom_filter_fn
   if custom_sparsity_map:
     sparsity_config.custom_sparsity_map = custom_sparsity_map
+  elif embed_sparsity:
+    custom_map = {
+        ('decoder', 'logits_dense', 'kernel'): embed_sparsity,
+        ('token_embedder', 'embedding'): embed_sparsity,
+    }
+    sparsity_config.custom_sparsity_map = custom_map
   return api.create_updater_from_config(sparsity_config)

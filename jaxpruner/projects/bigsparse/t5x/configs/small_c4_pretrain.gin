@@ -47,7 +47,7 @@ network.T5Config:
   vocab_size = 32128  # vocab size rounded to a multiple of 128 for TPU efficiency
   dtype = 'bfloat16'
   emb_dim = 64
-  num_heads = 1 
+  num_heads = 1
   num_encoder_layers = 8
   num_decoder_layers = 8
   head_dim = 64

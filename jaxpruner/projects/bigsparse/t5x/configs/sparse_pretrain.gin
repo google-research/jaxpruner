@@ -46,6 +46,7 @@ config_util.create_updater_from_config:
   update_freq = 100
   update_start_step = 5_000
   sparsity = 0.8
+  embed_sparsity = None
 
 optimizers_wrapper.chain:
   transformations = [@optax.clip(), @optax.adamw()]
