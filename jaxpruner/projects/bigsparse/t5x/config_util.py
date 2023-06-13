@@ -1,6 +1,7 @@
 """This file contains apis to use the jax prunder libraries."""
 import gin
 from jaxpruner import api
+from jaxpruner.projects.bigsparse.t5x import iterative_nm
 from jaxpruner.projects.bigsparse.t5x import ste_efficient
 import ml_collections
 
@@ -14,6 +15,7 @@ def create_updater_from_config(
     update_start_step=1,
     sparsity=None,
     custom_sparsity_map=None,
+    sparsity_type=None,
 ):
   """Gin based wrapper around jaxpruner create function."""
   api.ALGORITHM_REGISTRY['magnitude_ste_eff'] = (
@@ -23,8 +25,10 @@ def create_updater_from_config(
       ste_efficient.EffSteMagnitudePruningV2
   )
   api.ALGORITHM_REGISTRY['random_ste_eff'] = ste_efficient.EffSteRandomPruning
+  api.ALGORITHM_REGISTRY['iterative_nm'] = iterative_nm.IterativeNMPruning
   sparsity_config = ml_collections.ConfigDict()
   sparsity_config.algorithm = pruner_type
+  sparsity_config.sparsity_type = sparsity_type
   sparsity_config.dist_type = dist_type
   sparsity_config.update_end_step = update_end_step
   sparsity_config.update_freq = update_freq
