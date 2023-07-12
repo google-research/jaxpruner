@@ -10,12 +10,24 @@ class TransformerW(network.Transformer):
 
   config: network.T5Config
   width: float = 1.0
+  scale: float = 0.0  # num-heads constant scaling
 
   def setup(self):
-    new_vals = {
-        k: int(getattr(self.config, k) * self.width)
-        for k in ('emb_dim', 'mlp_dim', 'num_heads')
-    }
+    if self.scale != 0.0:
+      fac = self.scale**0.5
+      head_dim = int(self.config.emb_dim * fac) // self.config.num_heads
+      emb_dim = head_dim * self.config.num_heads
+      new_vals = {
+          'emb_dim': emb_dim,
+          'mlp_dim': int(self.config.mlp_dim * fac),
+          # 'mlp_dim': int(self.config.mlp_dim * fac // 4) * 4,
+          'head_dim': head_dim,
+      }
+    else:
+      new_vals = {
+          k: int(getattr(self.config, k) * self.width)
+          for k in ('emb_dim', 'mlp_dim', 'num_heads')
+      }
     new_cfg = self.config.replace(**new_vals)
 
     self.shared_embedding = layers.Embed(

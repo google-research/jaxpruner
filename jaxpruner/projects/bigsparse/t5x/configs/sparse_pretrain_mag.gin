@@ -1,0 +1,71 @@
+from __gin__ import dynamic_registration
+import __main__ as train_script
+
+import optax
+
+from t5x import utils
+
+from jaxpruner.baselines.t5x import sparse_trainer
+from jaxpruner.baselines.t5x import optimizers_wrapper
+from jaxpruner.projects.bigsparse.t5x import config_util
+
+RANDOM_SEED = 8
+TRAIN_STEPS = 0
+NETWORK_WIDTH = 1.
+BATCH_SIZE = 128
+
+EVAL_PERIOD = 10_000
+CHECKPOINT_PERIOD = 10_000
+
+train_script.train:
+  eval_period = %EVAL_PERIOD
+
+utils.SaveCheckpointConfig:
+  period = %CHECKPOINT_PERIOD
+  dtype = 'float32'
+  # keep = 1
+  save_dataset = True
+
+train_script.train.trainer_cls = @sparse_trainer.SparseTrainer
+
+OPTIMIZER = @optimizers_wrapper.SparseOptaxWrapper()
+# This is needed so that default jax.random seed is used. Without this, 
+# hardware seed is used which has 4 integers.
+
+optimizers_wrapper.SparseOptaxWrapper:
+    optax_optimizer = @optimizers_wrapper.chain()
+    sparsity_updater = @config_util.create_updater_from_config()
+
+sparse_trainer.SparseTrainer:
+  num_microbatches = None
+  learning_rate_fn = @utils.create_learning_rate_scheduler()
+
+config_util.create_updater_from_config:
+  pruner_type = 'magnitude'
+  dist_type = 'uniform'
+  update_end_step = 0
+  update_freq = 100
+  update_start_step = 0
+  sparsity = 0
+  embed_sparsity = 'auto'
+
+optimizers_wrapper.chain:
+  transformations = [
+      @optax.scale_by_factored_rms(),
+      @config_util.clip_by_block_rms_sparse(),
+      @optax.scale_by_schedule(),
+      @config_util.scale_by_param_block_rms_sparse(),
+      @optax.scale(),
+  ]
+
+optax.scale_by_factored_rms:
+  factored = False
+
+config_util.clip_by_block_rms_sparse:
+  threshold = 1.0
+
+optax.scale_by_schedule:
+  step_size_fn = @utils.create_learning_rate_scheduler()
+
+optax.scale:
+  step_size = -1.0

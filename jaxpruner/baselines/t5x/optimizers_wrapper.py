@@ -51,8 +51,24 @@ def jp_partition_fn(state, params_axes):
   )
 
 
+def fac_partition_fn(state, params_axes):
+  return optax.FactoredState(  # pytype: disable=wrong-arg-types  # numpy-scalars
+      count=None,
+      v_row=OptaxStatePartitionRules.derive_optax_logical_axes(
+          state.v_row, params_axes
+      ),
+      v_col=OptaxStatePartitionRules.derive_optax_logical_axes(
+          state.v_col, params_axes
+      ),
+      v=OptaxStatePartitionRules.derive_optax_logical_axes(
+          state.v, params_axes
+      ),
+  )
+
+
 
 OptaxStatePartitionRules._RULES[SparseState] = jp_partition_fn
+OptaxStatePartitionRules._RULES[optax.FactoredState] = fac_partition_fn
 
 
 

@@ -7,6 +7,7 @@ import chex
 import jax
 import jax.numpy as jnp
 from jaxpruner import base_updater
+from jaxpruner import sparsity_schedules
 from jaxpruner.algorithms import pruners
 import optax
 
@@ -99,6 +100,19 @@ class EffSteMixinV2:
 @dataclasses.dataclass
 class EffSteMagnitudePruningV2(EffSteMixinV2, base_updater.BaseUpdater):
   """Magnitude pruner, which updates weight with straight through estimator."""
+
+  # Non gradual STE
+  oneshot: bool = False
+
+  def __post_init__(self):
+    super().__post_init__()
+
+    if self.oneshot:
+      self.scheduler = sparsity_schedules.PeriodicSchedule(
+          update_freq=self.scheduler.update_freq,
+          update_start_step=self.scheduler.update_start_step,
+          update_end_step=self.scheduler.update_end_step,
+      )
 
   def calculate_scores(self, params, sparse_state=None, grads=None):
     del sparse_state
