@@ -48,7 +48,7 @@ class SparseState(NamedTuple):
   masks: chex.ArrayTree
   inner_state: Any = None
   target_sparsities: Optional[chex.ArrayTree] = None
-  count: Optional[chex.Array] = None
+  count: Any = None
 
 
 @functools.partial(jax.jit, static_argnums=2)
