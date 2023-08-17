@@ -155,6 +155,7 @@ def topk_n_by_m_mask_calculator(
   """
   n = sparsity_type.n
   m = sparsity_type.m
+  axis = sparsity_type.axis
   if n > m:
     raise ValueError(
         f'N({n}) must be <= M({m}) in N({n}):M({m}) structured sparsity.'
@@ -162,11 +163,21 @@ def topk_n_by_m_mask_calculator(
   # TODO: Raise ValueError if size(scores) is not divisible by M.
   length = jnp.size(scores)
   group = int(length / m)
+
+  # Transpose target axis and the last axis.
+  if not (axis == -1 or axis == scores.ndim - 1):
+    scores = jnp.swapaxes(scores, axis, -1)
+
   scores_temp = scores.reshape(group, m, order='C')
   # Calling argsort twice calculates ranks for each element at each row.
   ranks = scores_temp.argsort().argsort()
   mask = (ranks >= m - n).astype(jnp.uint8)
-  return mask.reshape(scores.shape, order='C')
+  mask = mask.reshape(scores.shape, order='C')
+
+  # Restore target axis to the original axis
+  if not (axis == -1 or axis == scores.ndim - 1):
+    mask = jnp.swapaxes(mask, axis, -1)
+  return mask
 
 
 # TODO: Enable different layers having different block shapes.

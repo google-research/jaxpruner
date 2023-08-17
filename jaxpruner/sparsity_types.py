@@ -39,6 +39,7 @@ class NByM(NamedTuple):
   # This n-by-m operation works for the last dim of the corresponding variable.
   n: int
   m: int
+  axis: int = -1
 
 
 SparsityType = Union[Unstructured, Block, NByM]

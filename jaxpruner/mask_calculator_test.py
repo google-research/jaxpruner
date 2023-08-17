@@ -43,6 +43,11 @@ MASK_N2_M4_1 = [
     [[0, 0, 1, 1], [1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 1]],
     [[1, 0, 0, 1], [0, 0, 1, 1], [0, 1, 0, 1], [0, 0, 1, 1]],
 ]
+MASK_N2_M4_AXIS1_1 = [
+    [[1, 0, 1, 0], [1, 0, 0, 0], [0, 1, 0, 1], [0, 1, 1, 1]],
+    [[1, 0, 0, 0], [0, 0, 1, 1], [0, 1, 0, 1], [1, 1, 1, 0]],
+]
+
 
 SCORE_2 = [1, 1, 1, 1, 1, 1, 1, 1]
 MASK_UNS_2 = [1, 1, 1, 1, 0, 0, 0, 0]
@@ -181,6 +186,8 @@ class MaskCalculatorTest(parameterized.TestCase, absltest.TestCase):
       (SCORE_1, sparsity_types.NByM(n=2, m=4), MASK_N2_M4_1),
       (SCORE_2, sparsity_types.NByM(n=2, m=4), MASK_N2_M4_2),
       (SCORE_3, sparsity_types.NByM(n=4, m=2), None),
+      (SCORE_1, sparsity_types.NByM(n=2, m=4, axis=1), MASK_N2_M4_AXIS1_1),
+      (SCORE_3, sparsity_types.NByM(n=4, m=2, axis=0), None),
   )
   def testScoreBasedTopKWithNbyMInput(
       self, score, sparsity_type, expected_mask
