@@ -79,7 +79,7 @@ def train_with_lr(
       other_state_variables={"flax_mutables": flax_mutables}
       if flax_mutables else None)
   sparsity_metrics = {
-      k: clu.metrics.Average.from_model_output(v)
+      k: clu.metrics.Average.from_model_output(v)  # pytype: disable=wrong-arg-types  # jnp-array
       for k, v in jaxpruner.summarize_sparsity(
           forward_params, only_total_sparsity=True
       ).items()
