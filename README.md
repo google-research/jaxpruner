@@ -1,6 +1,6 @@
 # JaxPruner: a research library for sparsity research
 
-<img src="https://github.com/google-research/jaxpruner/blob/main/images/jaxpruner.gif" alt="Head2Toe " width="40%" align="middle">
+<img src="https://github.com/google-research/jaxpruner/blob/main/images/jaxpruner.gif" alt="Jaxpruner logo " width="40%" align="middle">
 
 Paper: [arxiv.org/abs/2304.14082](https://arxiv.org/abs/2304.14082)
 
