@@ -63,7 +63,7 @@ class PeriodicSchedule(NoUpdateSchedule):
     is_update_step = jnp.logical_and(
         step % self.update_freq == 0, step >= self.update_start_step
     )
-    if self.update_end_step:
+    if self.update_end_step is not None:
       is_update_step = jnp.logical_and(
           is_update_step, step <= self.update_end_step
       )

@@ -81,5 +81,4 @@ class AdamBasedFisherPruning(jaxpruner.BaseUpdater):
 
 def add_to_jaxpruner():
   """Add the 'adam-fisher' algorithm to the jaxpruner."""
-  jaxpruner.ALGORITHM_REGISTRY['adam-fisher'] = AdamBasedFisherPruning
-  jaxpruner.ALGORITHMS = tuple(jaxpruner.ALGORITHM_REGISTRY.keys())
+  jaxpruner.register_algorithm('adam-fisher', AdamBasedFisherPruning)

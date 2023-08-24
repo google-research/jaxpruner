@@ -17,9 +17,11 @@
 
 from jaxpruner.algorithms import *
 
+
 from jaxpruner.api import ALGORITHM_REGISTRY
-from jaxpruner.api import ALGORITHMS
+from jaxpruner.api import all_algorithm_names
 from jaxpruner.api import create_updater_from_config
+from jaxpruner.api import register_algorithm
 from jaxpruner.base_updater import apply_mask
 from jaxpruner.base_updater import BaseUpdater
 from jaxpruner.base_updater import NoPruning

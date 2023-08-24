@@ -15,6 +15,7 @@
 
 """Algorithms implemented in jaxpruner."""
 
+
 from jaxpruner.algorithms.global_pruners import GlobalMagnitudePruning
 from jaxpruner.algorithms.global_pruners import GlobalSaliencyPruning
 from jaxpruner.algorithms.pruners import MagnitudePruning

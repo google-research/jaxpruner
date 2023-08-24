@@ -76,7 +76,7 @@ class BaseUpdater(object):
   # TODO Make sparsity default to be 0.
   sparsity_type: sparsity_types.SparsityType = sparsity_types.Unstructured()
   sparsity_distribution_fn: Optional[SparsityDistributionFnType] = (
-      sparsity_distributions.uniform
+      functools.partial(sparsity_distributions.uniform, sparsity=0.0)
   )
   rng_seed: Optional[jax.random.PRNGKey] = None
   use_packed_masks: bool = False

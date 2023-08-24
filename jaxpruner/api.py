@@ -17,6 +17,7 @@
 import copy
 import functools
 import logging
+from typing import Tuple
 
 from jaxpruner import algorithms
 from jaxpruner import base_updater
@@ -43,6 +44,18 @@ ALGORITHM_REGISTRY = {
 ALGORITHMS = tuple(ALGORITHM_REGISTRY.keys())
 
 
+def all_algorithm_names():
+  """Returns all algorithm names registered."""
+  return tuple(ALGORITHM_REGISTRY.keys())
+
+
+def register_algorithm(
+    algorithm_name, algorithm
+):
+  """Registers a new algorithm."""
+  ALGORITHM_REGISTRY[algorithm_name] = algorithm
+
+
 def create_updater_from_config(
     sparsity_config,
 ):
@@ -65,7 +78,7 @@ def create_updater_from_config(
     updater = create_updater_from_config(sparsity_config)
   ```
 
-  - `algorithm`: str, one of jaxpruner.ALGORITHMS
+  - `algorithm`: str, one of jaxpruner.all_algorithm_names()
   - `dist_type`: str, 'erk' or 'uniform'.
   - `update_freq`: int, passed to PeriodicSchedule.
   - `update_end_step`: int, passed to PeriodicSchedule.
@@ -83,7 +96,7 @@ def create_updater_from_config(
     sparsity_config: configuration for the algorithm. See options above.
 
   Returns:
-    one of the jaxpruner.ALGORITHMS initiated with the given configuration.
+    an algorithm with the given configuration.
   """
   logging.info('Creating  updater for %s', sparsity_config.algorithm)
   if sparsity_config.algorithm == 'no_prune':
@@ -157,8 +170,8 @@ def create_updater_from_config(
   else:
     raise ValueError(
         f'Sparsity algorithm {config.algorithm} is not supported.'
-        ' Please use jaxpruner.ALGORITHMS or ensure that your'
-        ' custom algoritms are defined there.'
+        ' Please use a key from jaxpruner.all_algorithm_names() or register'
+        ' the new algorithm using jaxpruner.register_algorithm().'
     )
 
   if config.get('update_start_step', None) is None:

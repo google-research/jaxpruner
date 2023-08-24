@@ -112,5 +112,4 @@ class ACDC(jaxpruner.algorithms.MagnitudePruning):
 
 def add_to_jaxpruner():
   """Add the 'acdc' algorithm to the jaxpruner."""
-  jaxpruner.ALGORITHM_REGISTRY['acdc'] = ACDC
-  jaxpruner.ALGORITHMS = tuple(jaxpruner.ALGORITHM_REGISTRY.keys())
+  jaxpruner.register_algorithm('acdc', ACDC)

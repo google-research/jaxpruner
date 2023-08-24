@@ -77,7 +77,7 @@ class ScenicConfigTest(absltest.TestCase):
     sparsity_config.dist_type = 'uniform'
     sparsity_config.sparsity = 0.9
 
-    with self.assertRaisesRegex(ValueError, 'jaxpruner.ALGORITHMS'):
+    with self.assertRaisesRegex(ValueError, 'jaxpruner.all_algorithm_names()'):
       api.create_updater_from_config(sparsity_config)
 
   def testCreateUpdaterErrorWithWrongSparsityType(self):
