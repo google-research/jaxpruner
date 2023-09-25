@@ -141,7 +141,7 @@ def train(
   model = model_cls(config, dataset.meta_data)
 
   # Initialize model.
-  rng, init_rng = jax.random.split(rng)
+  train_rng, init_rng = jax.random.split(rng)
   (params, model_state, num_trainable_params, gflops) = (
       train_utils.initialize_model(
           model_def=model.flax_model,
@@ -168,8 +168,6 @@ def train(
   # We jit this, such that the arrays that are created on the same device as the
   # input is, in this case the CPU. Else they'd be on device[0].
   opt_state = jax.jit(tx.init, backend='cpu')(params)
-
-  rng, train_rng = jax.random.split(rng)
 
   # Create chrono class to track and store training statistics and metadata:
   chrono = train_utils.Chrono()
@@ -315,6 +313,7 @@ def train(
     ################### EVALUATION #######################
     if (step % log_eval_steps == 1) or (step == total_steps):
       chrono.pause(wait_for=(train_state.params))
+      act_sparsity = -1.0
       with report_progress.timed('eval'):
         eval_metrics = []
         # Sync model state across replicas.

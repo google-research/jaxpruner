@@ -1,4 +1,4 @@
-"""Main file for Scenic."""
+"""Main file for scenic training."""
 
 from absl import flags
 from absl import logging

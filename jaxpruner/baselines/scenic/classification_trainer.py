@@ -16,7 +16,7 @@
 """Training Script."""
 
 import functools
-from typing import Any, Callable, Dict, Tuple, Optional, Type
+from typing import Any, Callable, Dict, Optional, Tuple, Type
 
 from absl import logging
 from clu import metric_writers
@@ -263,7 +263,7 @@ def train(
   model = model_cls(config, dataset.meta_data)
 
   # Initialize model.
-  rng, init_rng = jax.random.split(rng)
+  train_rng, init_rng = jax.random.split(rng)
   (params, model_state, num_trainable_params, gflops) = (
       train_utils.initialize_model(
           model_def=model.flax_model,
@@ -288,8 +288,6 @@ def train(
   # We jit this, such that the arrays that are created on the same device as the
   # input is, in this case the CPU. Else they'd be on device[0].
   opt_state = jax.jit(tx.init, backend='cpu')(params)
-
-  rng, train_rng = jax.random.split(rng)
 
   # Create chrono class to track and store training statistics and metadata:
   chrono = train_utils.Chrono()
