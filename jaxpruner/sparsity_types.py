@@ -36,9 +36,16 @@ class Block(NamedTuple):
 
 
 class NByM(NamedTuple):
-  # This n-by-m operation works for the last dim of the corresponding variable.
+  # This n-by-m operation works for the target axis of the corresponding
+  # variable.
   n: int
   m: int
+  axis: int = -1
+
+
+class Channel(NamedTuple):
+  # This channel-wise operations works for the target axis of the corresponding
+  # variable.
   axis: int = -1
 
 

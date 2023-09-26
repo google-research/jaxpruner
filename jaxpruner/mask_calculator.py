@@ -49,6 +49,10 @@ def get_topk_fn(sparsity_type):
     )
   elif isinstance(sparsity_type, sparsity_types.NByM):
     return lambda scores, _: topk_n_by_m_mask_calculator(scores, sparsity_type)
+  elif isinstance(sparsity_type, sparsity_types.Channel):
+    return functools.partial(
+        topk_channel_mask_calculator, sparsity_type=sparsity_type
+    )
   else:
     raise ValueError(f'Not a supported sparsity type: {sparsity_type}')
 
@@ -229,6 +233,34 @@ def topk_block_mask_calculator(
       mask = jnp.repeat(mask, np.prod(scores.shape[2:]), axis=2).reshape(
           *scores.shape
       )
+  return mask
+
+
+@functools.partial(jax.jit, static_argnames=['sparsity_type'])
+def topk_channel_mask_calculator(
+    scores, sparsity, sparsity_type
+):
+  """Given a score of matrix creates a binary mask to prune channels.
+
+  Applies sparsity to the target axis of the score array.
+
+  Args:
+    scores: top-scores are kept.
+    sparsity: the desired sparsity rate.
+    sparsity_type: Column sparsity.
+
+  Returns:
+    array, same shape and type as scores.
+  """
+  target_axis = sparsity_type.axis
+  if target_axis < 0:
+    target_axis = scores.ndim + target_axis
+
+  non_target_axis = [i for i in range(scores.ndim) if i != target_axis]
+  channel_score = jnp.sum(scores, axis=non_target_axis, keepdims=True)
+
+  mask = _topk_mask_calculator_internal(channel_score, sparsity)
+  mask = mask * jnp.ones_like(scores, dtype=MASK_DTYPE)
   return mask
 
 

@@ -48,7 +48,34 @@ MASK_N2_M4_AXIS1_1 = [
     [[1, 0, 1, 0], [1, 0, 0, 0], [0, 1, 0, 1], [0, 1, 1, 1]],
     [[1, 0, 0, 0], [0, 0, 1, 1], [0, 1, 0, 1], [1, 1, 1, 0]],
 ]
-
+MASK_CHANNEL_AXIS1_1 = [
+    [
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [1, 1, 1, 1],
+        [1, 1, 1, 1],
+    ],
+    [
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [1, 1, 1, 1],
+        [1, 1, 1, 1],
+    ],
+]
+MASK_CHANNEL_AXIS2_1 = [
+    [
+        [0, 0, 1, 1],
+        [0, 0, 1, 1],
+        [0, 0, 1, 1],
+        [0, 0, 1, 1],
+    ],
+    [
+        [0, 0, 1, 1],
+        [0, 0, 1, 1],
+        [0, 0, 1, 1],
+        [0, 0, 1, 1],
+    ],
+]
 
 SCORE_2 = [1, 1, 1, 1, 1, 1, 1, 1]
 MASK_UNS_2 = [1, 1, 1, 1, 0, 0, 0, 0]
@@ -64,6 +91,10 @@ SCORE_5 = [
     [1, 0.5, 0.3, 0.2, 1, 1.5, 1.8, 2.0, 1, 1],
 ]
 MASK_UNS_5 = [[1, 0, 0, 0, 1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 0, 1, 1, 1, 0, 0]]
+MASK_CHANNEL_AXIS1_5 = [
+    [1, 0, 0, 0, 1, 1, 1, 1, 0, 0],
+    [1, 0, 0, 0, 1, 1, 1, 1, 0, 0],
+]
 
 
 class MaskCalculatorTest(parameterized.TestCase, absltest.TestCase):
@@ -218,7 +249,10 @@ class MaskCalculatorTest(parameterized.TestCase, absltest.TestCase):
       dict(shape=[18, 4000, 4000], axis=-1),
       dict(shape=[18, 4000, 4000], axis=-2),
   )
-  def testTopKWithNbyMOnLargeTensor(self, shape, axis):
+  def testTopKWithNbyMLimitMemoryUsage(self, shape, axis):
+    # `score`` takes about 2.304 GB (4 * 36 * 4000 * 4000 / 10**6) of memory.
+    # Since the size of HBM is 8 GB for each core of Jellyfish. This test only
+    # pass if the peak memory does not exceed 8GB of memory.
     score = jax.random.normal(jax.random.PRNGKey(0), shape)
     topk_fn = mask_calculator.get_topk_fn(
         sparsity_types.NByM(n=2, m=4, axis=axis)
@@ -237,6 +271,32 @@ class MaskCalculatorTest(parameterized.TestCase, absltest.TestCase):
     )
     with self.assertRaises(ValueError):
       topk_fn(score, 0.5)
+
+  @parameterized.parameters(
+      (SCORE_1, 0.5, sparsity_types.Channel(axis=1), MASK_CHANNEL_AXIS1_1),
+      (SCORE_1, 0.5, sparsity_types.Channel(axis=-2), MASK_CHANNEL_AXIS1_1),
+      (SCORE_1, 0.5, sparsity_types.Channel(), MASK_CHANNEL_AXIS2_1),
+      (SCORE_1, 0.5, sparsity_types.Channel(axis=2), MASK_CHANNEL_AXIS2_1),
+      (SCORE_1, 0.5, sparsity_types.Channel(axis=-1), MASK_CHANNEL_AXIS2_1),
+      (SCORE_5, 0.5, sparsity_types.Channel(axis=1), MASK_CHANNEL_AXIS1_5),
+  )
+  def testScoreBasedTopKWithChannelInput(
+      self, score, sparsity, sparsity_type, expected_mask
+  ):
+    topk_fn = mask_calculator.get_topk_fn(sparsity_type)
+    topk_fn_in_jit = jax.jit(topk_fn)
+
+    self.assertTrue(
+        jnp.array_equal(
+            topk_fn(jnp.array(score), sparsity), jnp.array(expected_mask)
+        )
+    )
+    self.assertTrue(
+        jnp.array_equal(
+            topk_fn_in_jit(jnp.array(score), sparsity),
+            jnp.array(expected_mask),
+        )
+    )
 
 
 if __name__ == '__main__':
