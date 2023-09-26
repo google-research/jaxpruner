@@ -12,7 +12,7 @@ def reset_optimizer(state):
   """Resets Adam and SGD state."""
   if isinstance(state, optax.TraceState):
     new_trace = jax.tree_map(jnp.zeros_like, state.trace)
-    state = state._replace(new_trace)
+    state = state._replace(trace=new_trace)
   elif isinstance(state, optax.ScaleByAdamState):
     new_mu = jax.tree_map(jnp.zeros_like, state.mu)
     new_nu = jax.tree_map(jnp.zeros_like, state.nu)

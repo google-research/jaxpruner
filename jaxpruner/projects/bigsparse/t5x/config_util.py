@@ -4,9 +4,8 @@ import gin
 import jax
 import jax.numpy as jnp
 from jaxpruner import api
-from jaxpruner.projects.bigsparse.jaxpruner_extensions import acdc
-from jaxpruner.projects.bigsparse.t5x import iterative_nm
-from jaxpruner.projects.bigsparse.t5x import ste_efficient
+from jaxpruner.projects.extensions import acdc
+from jaxpruner.projects.extensions import iterative_nm
 import ml_collections
 import numpy as np
 import optax
@@ -30,15 +29,7 @@ def create_updater_from_config(
     ste_oneshot=False,
 ):
   """Gin based wrapper around jaxpruner create function."""
-
-  api.ALGORITHM_REGISTRY['magnitude_ste_eff'] = (
-      ste_efficient.EffSteMagnitudePruning
-  )
-  api.ALGORITHM_REGISTRY['magnitude_ste_eff_v2'] = (
-      ste_efficient.EffSteMagnitudePruningV2
-  )
-  api.ALGORITHM_REGISTRY['random_ste_eff'] = ste_efficient.EffSteRandomPruning
-  api.ALGORITHM_REGISTRY['iterative_nm'] = iterative_nm.IterativeNMPruning
+  iterative_nm.add_to_jaxpruner()
   acdc.add_to_jaxpruner()
 
   sparsity_config = ml_collections.ConfigDict()

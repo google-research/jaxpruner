@@ -7,8 +7,8 @@ import chex
 import jax
 import jax.numpy as jnp
 import jaxpruner
-from jaxpruner.projects.bigsparse.jaxpruner_extensions import acdc
-from jaxpruner.projects.bigsparse.jaxpruner_extensions import adam_fisher
+from jaxpruner.projects.extensions import acdc
+from jaxpruner.projects.extensions import adam_fisher
 import ml_collections
 import optax
 
@@ -54,9 +54,6 @@ class ExtensionsTest(parameterized.TestCase, absltest.TestCase):
     # Test state resetting
     _, state = tx.update(grads, state, params)
     adamstate = adam_fisher.find_adamstate(state.inner_state)
-    state = state._replace(
-        inner_state=adam_fisher.replace_adamstate(state.inner_state, adamstate)
-    )
     chex.assert_trees_all_close(
         adamstate.mu, jax.tree_map(jnp.zeros_like, params)
     )

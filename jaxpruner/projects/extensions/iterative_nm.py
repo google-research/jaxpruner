@@ -6,6 +6,7 @@ import dataclasses
 import functools
 import jax
 import jax.numpy as jnp
+import jaxpruner
 from jaxpruner import base_updater
 from jaxpruner import mask_calculator
 from jaxpruner import sparsity_types
@@ -69,3 +70,8 @@ class IterativeNMPruning(BaseUpdater):
     del sparse_state, grads
     param_magnitudes = jax.tree_map(jnp.abs, params)
     return param_magnitudes
+
+
+def add_to_jaxpruner():
+  """Add the 'iterative_nm' algorithm to the jaxpruner."""
+  jaxpruner.register_algorithm('iterative_nm', IterativeNMPruning)
