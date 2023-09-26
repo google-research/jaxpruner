@@ -21,6 +21,7 @@ import jax.numpy as jnp
 from jaxpruner import mask_calculator
 from jaxpruner import sparsity_types
 
+
 SCORE_1 = [
     [
         [0.69, 0.37, 0.96, 0.81],
@@ -212,6 +213,30 @@ class MaskCalculatorTest(parameterized.TestCase, absltest.TestCase):
             jnp.array(expected_mask),
         )
     )
+
+  @parameterized.parameters(
+      dict(shape=[18, 4000, 4000], axis=-1),
+      dict(shape=[18, 4000, 4000], axis=-2),
+  )
+  def testTopKWithNbyMOnLargeTensor(self, shape, axis):
+    score = jax.random.normal(jax.random.PRNGKey(0), shape)
+    topk_fn = mask_calculator.get_topk_fn(
+        sparsity_types.NByM(n=2, m=4, axis=axis)
+    )
+    topk_fn_in_jit = jax.jit(topk_fn)
+    topk_fn_in_jit(score, 0.5)
+
+  @parameterized.parameters(
+      dict(shape=[2, 4, 4], axis=0),
+      dict(shape=[2, 5, 3], axis=1),
+  )
+  def testTopKWithNbyMTargetAxisNotDivisibleByM(self, shape, axis):
+    score = jax.random.normal(jax.random.PRNGKey(0), shape)
+    topk_fn = mask_calculator.get_topk_fn(
+        sparsity_types.NByM(n=2, m=4, axis=axis)
+    )
+    with self.assertRaises(ValueError):
+      topk_fn(score, 0.5)
 
 
 if __name__ == '__main__':
