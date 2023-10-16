@@ -16,7 +16,7 @@
 """Calculate the mask with inputs such as score values."""
 
 import functools
-
+from typing import Callable
 import jax
 import jax.numpy as jnp
 from jaxpruner import sparsity_types
@@ -24,6 +24,10 @@ import numpy as np
 
 
 MASK_DTYPE = 'uint8'
+
+# Takes a tensor and desired sparsity as arguments
+# and resturns the mask of the given tensor.
+TopKFnType = Callable[[jax.Array, float], jax.Array]
 
 
 def get_topk_fn(sparsity_type):

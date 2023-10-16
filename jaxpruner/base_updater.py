@@ -29,6 +29,7 @@ from jaxpruner import sparsity_types
 import optax
 
 FilterFnType = sparsity_distributions.FilterFnType
+TopkFnType = mask_calculator.TopKFnType
 CustomSparsityMapType = sparsity_distributions.CustomSparsityMapType
 
 SparsityDistributionFnType = Callable[
@@ -80,11 +81,13 @@ class BaseUpdater(object):
   )
   rng_seed: Optional[jax.random.PRNGKey] = None
   use_packed_masks: bool = False
+  topk_fn: Optional[TopkFnType] = None
 
   def __post_init__(self):
     """Define variables."""
     # TODO Try enabling different sparsity types for different layers.
-    self.topk_fn = mask_calculator.get_topk_fn(self.sparsity_type)
+    if self.topk_fn is None:
+      self.topk_fn = mask_calculator.get_topk_fn(self.sparsity_type)
     # We set default value None, so that we dont't need to initialize jax
     # to read the file. Without this we get error when running the tests.
     if self.rng_seed is None:

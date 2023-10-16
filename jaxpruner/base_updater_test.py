@@ -107,6 +107,16 @@ class BaseUpdaterTest(parameterized.TestCase, absltest.TestCase):
         updater.instant_sparsify(param_tree)[0], param_tree
     )
 
+  def testCustomTopkFn(self):
+    def _mock_topk_fn(t, _):
+      return jnp.ones_like(t)
+
+    sparse_updater = base_updater.BaseUpdater(
+        topk_fn=_mock_topk_fn,
+    )
+    # Test if custom topk_fn is not overrided.
+    self.assertEqual(sparse_updater.topk_fn, _mock_topk_fn)
+
 
 if __name__ == '__main__':
   absltest.main()
