@@ -25,6 +25,7 @@ from jaxpruner.baselines.scenic import classification_trainer
 import ml_collections
 from scenic import app
 from scenic.model_lib import models
+from scenic.projects.baselines.plainvit import plainvit
 from scenic.train_lib import train_utils
 
 
@@ -38,8 +39,10 @@ def main(
     writer,
 ):
   """Main function for Scenic."""
-
-  model_cls = models.get_model_cls(config.model_name)
+  if config.model_name == 'plainvit':
+    model_cls = plainvit.PlainViT
+  else:
+    model_cls = models.get_model_cls(config.model_name)
   data_rng, rng = jax.random.split(rng)
 
   if config.checkpoint:

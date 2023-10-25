@@ -37,6 +37,7 @@ import optax
 from scenic.dataset_lib import dataset_utils
 from scenic.model_lib.base_models import base_model
 from scenic.train_lib import lr_schedules
+from scenic.train_lib import optax as scenic_optax
 from scenic.train_lib import optimizers
 from scenic.train_lib import train_utils
 
@@ -46,7 +47,7 @@ MetricFn = Callable[
     [jnp.ndarray, Dict[str, jnp.ndarray]], Dict[str, Tuple[float, int]]
 ]
 LossFn = Callable[[jnp.ndarray, Batch, Optional[jnp.ndarray]], float]
-LrFn = Callable[[jnp.ndarray], jnp.ndarray]
+LrFns = Dict[str, Callable[[jnp.ndarray], jnp.ndarray]]
 
 
 def train_step(
@@ -55,7 +56,7 @@ def train_step(
     *,
     flax_model,
     loss_fn,
-    lr_fn,
+    lr_fns,
     metrics_fn,
     updater,
     config,
@@ -78,7 +79,7 @@ def train_step(
     flax_model: A Flax model.
     loss_fn: A loss function that given logits, a batch, and parameters of the
       model calculates the loss.
-    lr_fn: The learning rate fn used for the logging the learning rate.
+    lr_fns: Learning rate functions used for the logging the learning rate.
     metrics_fn: A metrics function that given logits and batch of data,
       calculates the metrics as well as the loss.
     updater: A sparsity updater for sparse training.
@@ -161,8 +162,8 @@ def train_step(
   training_logs['l2_params'] = jnp.sqrt(sum([jnp.vdot(p, p) for p in ps]))
   us = jax.tree_util.tree_leaves(updates)
   training_logs['l2_updates'] = jnp.sqrt(sum([jnp.vdot(u, u) for u in us]))
-  # TODO: Can we get this from the optimizer instead?
-  training_logs['learning_rate'] = lr_fn(train_state.global_step)  # pytype: disable=wrong-arg-types
+  for name, lr_fn in lr_fns.items():
+    training_logs[name] = lr_fn(train_state.global_step)  # pytype: disable=wrong-arg-types
 
   metrics = metrics_fn(logits, batch)
 
@@ -259,6 +260,7 @@ def train(
       regression testing.
   """
   lead_host = jax.process_index() == 0
+  is_plainvit = config.model_name == 'plainvit'
   # Build the loss_fn, metrics, and flax_model.
   model = model_cls(config, dataset.meta_data)
 
@@ -277,13 +279,21 @@ def train(
   )
 
   # Create optimizer.
-  lr_fn = lr_schedules.get_learning_rate_fn(config)
-  optimizer_config = optimizers.get_optax_optimizer_config(config)
-  # If the config is already an optax-compatible config, better call directly:
+  lr_fns = {}
+  if is_plainvit:
+    schedule_fns = scenic_optax.make_schedule(config.get('schedule'))
+    tx, _ = scenic_optax.make(config.optimizer, schedule_fns, params)
+    for _, name, (lr_fn, _) in schedule_fns:
+      lr_name = 'learning_rate' if name == 'all' else f'learning_rate_{name}'
+      lr_fns[lr_name] = lr_fn
+  else:
+    lr_fn = lr_schedules.get_learning_rate_fn(config)
+    lr_fns['learning_rate'] = lr_fn
+    optimizer_config = optimizers.get_optax_optimizer_config(config)
+    tx = optimizers.get_optimizer(optimizer_config, lr_fn, params=params)
+    # If the config is already an optax-compatible config, better call directly:
   #   optimizers.get_optimizer(config.optimizer_configs, lr_fn)
   updater = jaxpruner.create_updater_from_config(config.sparsity_config)
-
-  tx = optimizers.get_optimizer(optimizer_config, lr_fn, params=params)
   tx = updater.wrap_optax(tx)
   # We jit this, such that the arrays that are created on the same device as the
   # input is, in this case the CPU. Else they'd be on device[0].
@@ -322,7 +332,7 @@ def train(
           train_step,
           flax_model=model.flax_model,
           loss_fn=model.loss_function,
-          lr_fn=lr_fn,
+          lr_fns=lr_fns,
           metrics_fn=model.get_metrics_fn('train'),
           updater=updater,
           config=config,
@@ -363,7 +373,10 @@ def train(
   chrono.inform(start_step, total_steps, config.batch_size, steps_per_epoch)
   logging.info('Starting training loop at step %d.', start_step + 1)
   report_progress = periodic_actions.ReportProgress(
-      num_train_steps=total_steps, writer=writer
+      num_train_steps=total_steps,
+      writer=writer,
+      every_secs=None,
+      every_steps=config.get('report_progress_step', log_summary_steps),
   )
 
   def write_note(note):
@@ -409,7 +422,7 @@ def train(
         or (step == total_steps)
         or (lead_host and chrono.warmup)
     ):
-      chrono.pause()
+      chrono.pause(wait_for=(train_metrics))
       if lead_host:
         chrono.tick(step, writer, write_note)
       # train_metrics is list of a dictionaries of metrics, where the shape of
