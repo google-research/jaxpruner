@@ -28,6 +28,7 @@ from jaxpruner import sparsity_schedules
 from jaxpruner import sparsity_types
 import optax
 
+
 FilterFnType = sparsity_distributions.FilterFnType
 TopkFnType = mask_calculator.TopKFnType
 CustomSparsityMapType = sparsity_distributions.CustomSparsityMapType
