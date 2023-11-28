@@ -34,12 +34,7 @@ TopkFnType = mask_calculator.TopKFnType
 CustomSparsityMapType = sparsity_distributions.CustomSparsityMapType
 
 SparsityDistributionFnType = Callable[
-    [
-        chex.ArrayTree,
-        sparsity_types.SparsityType,
-        Optional[FilterFnType],
-        Optional[CustomSparsityMapType],
-    ],
+    [chex.ArrayTree],
     chex.ArrayTree,
 ]
 
