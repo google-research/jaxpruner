@@ -14,6 +14,7 @@
 # limitations under the License.
 
 """This file contains apis to use the jax prunder libraries."""
+from absl import logging
 import gin
 from jaxpruner import api
 import ml_collections
@@ -31,6 +32,18 @@ def create_updater_from_config(
     rng_seed=8,
 ):
   """Gin based wrapper around jaxpruner create function."""
+  logging.info(
+      'Creating create_updater_from_config fn with the following parameters:'
+  )
+  logging.info('\t pruner_type: %s', pruner_type)
+  logging.info('\t dist_type: %s', dist_type)
+  logging.info('\t update_end_step: %s', update_end_step)
+  logging.info('\t update_freq: %s', update_freq)
+  logging.info('\t update_start_step: %s', update_start_step)
+  logging.info('\t sparsity: %s', sparsity)
+  logging.info('\t drop_fraction: %s', drop_fraction)
+  logging.info('\t rng_seed: %s', rng_seed)
+
   sparsity_config = ml_collections.ConfigDict()
   sparsity_config.algorithm = pruner_type
   sparsity_config.dist_type = dist_type
