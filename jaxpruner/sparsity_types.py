@@ -49,7 +49,7 @@ class Channel(NamedTuple):
   axis: int = -1
 
 
-SparsityType = Union[Unstructured, Block, NByM]
+SparsityType = Union[Unstructured, Block, NByM, Channel]
 
 
 # TODO following is needed since isintance(obj, SparsityType) fails.
