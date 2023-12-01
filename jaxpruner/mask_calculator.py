@@ -52,7 +52,9 @@ def get_topk_fn(sparsity_type):
         use_avg_pooling=sparsity_type.use_avg_pooling,
     )
   elif isinstance(sparsity_type, sparsity_types.NByM):
-    return lambda scores, _: topk_n_by_m_mask_calculator(scores, sparsity_type)
+    return lambda scores, sparsity: topk_n_by_m_mask_calculator(
+        scores, sparsity, sparsity_type
+    )
   elif isinstance(sparsity_type, sparsity_types.Channel):
     return functools.partial(
         topk_channel_mask_calculator, sparsity_type=sparsity_type
@@ -143,36 +145,11 @@ def _pool_2d(
   return pooled_2d
 
 
-@functools.partial(jax.jit, static_argnames=['sparsity_type'])
-def topk_n_by_m_mask_calculator(
-    scores, sparsity_type
+def _topk_n_by_m_mask_calculator_internal(
+    scores, n, m, axis
 ):
-  """Given a score of matrix creates a binary n by m mask.
+  """Given a score of matrix creates a binary n by m mask."""
 
-  Applies sparsity to the last dimension of the score array.
-
-  Args:
-    scores: top-scores are kept
-    sparsity_type: N:M structured sparsity.
-
-  Returns:
-    array, same shape and type as scores.
-
-  Raises ValueError:
-    if N > M in N:M sparsity.
-  """
-  n = sparsity_type.n
-  m = sparsity_type.m
-  axis = sparsity_type.axis
-
-  # Change axis to the positive value
-  if axis < 0:
-    axis = scores.ndim + axis
-
-  if n > m:
-    raise ValueError(
-        f'N({n}) must be <= M({m}) in N({n}):M({m}) structured sparsity.'
-    )
   # TODO: Raise ValueError if size(scores) is not divisible by M.
   target_axis_length = scores.shape[axis]
   if target_axis_length % m != 0:
@@ -196,13 +173,59 @@ def topk_n_by_m_mask_calculator(
 
   # Calling argsort twice calculates ranks for each element at each row.
   ranks = scores_temp.argsort(axis=axis).argsort(axis=axis)
-  mask = (ranks >= m - n).astype(jnp.uint8)
+  mask = (ranks >= m - n).astype(MASK_DTYPE)
 
   # Swap `m` and `target_axis_num_group` to restore
   mask = jnp.swapaxes(mask, axis, axis + 1)
   mask = mask.reshape(scores.shape, order='C')
 
   return mask
+
+
+functools.partial(jax.jit, static_argnames=['sparsity_type'])
+
+
+def topk_n_by_m_mask_calculator(
+    scores, sparsity, sparsity_type
+):
+  """Given a score of matrix creates a binary n by m mask.
+
+  Applies sparsity to the last dimension of the score array.
+
+  Args:
+    scores: top-scores are kept
+    sparsity: the desired sparsity rate. If sparsity is zero then, none of
+      weight will be pruned, otherwise N:M structured sparsity on sparsity_type
+      will be applied.
+    sparsity_type: N:M structured sparsity.
+
+  Returns:
+    array, same shape and type as scores.
+
+  Raises ValueError:
+    if N > M in N:M sparsity.
+  """
+  n = sparsity_type.n
+  m = sparsity_type.m
+  axis = sparsity_type.axis
+
+  # Change axis to the positive value
+  if axis < 0:
+    axis = scores.ndim + axis
+
+  if n > m:
+    raise ValueError(
+        f'N({n}) must be <= M({m}) in N({n}):M({m}) structured sparsity.'
+    )
+
+  return jax.lax.cond(
+      sparsity == 0,
+      lambda scores,: jnp.ones_like(scores, dtype=MASK_DTYPE),
+      functools.partial(
+          _topk_n_by_m_mask_calculator_internal, n=n, m=m, axis=axis
+      ),
+      scores,
+  )
 
 
 # TODO: Enable different layers having different block shapes.

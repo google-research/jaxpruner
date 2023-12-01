@@ -14,6 +14,7 @@
 # limitations under the License.
 
 """Tests for utility functions in mask_calculator.py."""
+
 from absl.testing import absltest
 from absl.testing import parameterized
 import jax
@@ -271,6 +272,21 @@ class MaskCalculatorTest(parameterized.TestCase, absltest.TestCase):
     )
     with self.assertRaises(ValueError):
       topk_fn(score, 0.5)
+
+  @parameterized.parameters(
+      dict(shape=[2, 4, 4], axis=1),
+      dict(shape=[2, 4, 8], axis=2),
+  )
+  def testTopKWithNbyMGenerateNonPrunedMaskForSparsityZero(self, shape, axis):
+    score = jax.random.normal(jax.random.PRNGKey(0), shape)
+    topk_fn = mask_calculator.get_topk_fn(
+        sparsity_types.NByM(n=2, m=4, axis=axis)
+    )
+    non_pruned_mask = topk_fn(score, 0)
+    pruned_mask = topk_fn(score, 0.5)
+
+    self.assertEqual((non_pruned_mask == 0).mean(), 0)
+    self.assertEqual((pruned_mask == 0).mean(), 0.5)
 
   @parameterized.parameters(
       (SCORE_1, 0.5, sparsity_types.Channel(axis=1), MASK_CHANNEL_AXIS1_1),
