@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2023 Jaxpruner Authors.
+# Copyright 2024 Jaxpruner Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,4 +56,4 @@ SparsityType = Union[Unstructured, Block, NByM, Channel]
 # TODO check whether there is a better way.
 def is_sparsity_type(instance_to_check):
   """Checks whether given object is a sparsity type."""
-  return type(instance_to_check) in [Unstructured, Block, NByM]
+  return type(instance_to_check) in [Unstructured, Block, NByM, Channel]

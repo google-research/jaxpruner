@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2023 Jaxpruner Authors.
+# Copyright 2024 Jaxpruner Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -144,7 +144,6 @@ def create_updater_from_config(
     config.sparsity_distribution_fn = functools.partial(
         config.sparsity_distribution_fn, **kwargs
     )
-
   if config.get('sparsity_type', None):
     s_type = config.sparsity_type
     if isinstance(s_type, str) and s_type.startswith('nm'):
@@ -157,7 +156,11 @@ def create_updater_from_config(
       n, m = s_type.split('_')[1].strip().split(',')
       del config.sparsity_type
       config.sparsity_type = sparsity_types.Block(block_shape=(int(n), int(m)))
-    elif not isinstance(s_type, sparsity_types.SparsityType):
+    elif isinstance(s_type, str) and (s_type.startswith('channel')):
+      axis = int(s_type.split('_')[1])
+      del config.sparsity_type
+      config.sparsity_type = sparsity_types.Channel(axis=axis)
+    else:
       raise ValueError(f'Sparsity type {s_type} is not supported.')
 
   if config.algorithm in ALGORITHM_REGISTRY:
