@@ -83,6 +83,7 @@ def uniform(
   return_val = flax.traverse_util.unflatten_dict(res_dict)
   if isinstance(params, flax.core.frozen_dict.FrozenDict):
     return_val = flax.core.freeze(return_val)
+  logging.info('Sparsities %s', return_val)
   return return_val
 
 

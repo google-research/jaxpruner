@@ -67,8 +67,10 @@ def create_updater_from_config(
   elif embed_sparsity:
     custom_map = {
         ('decoder', 'logits_dense', 'kernel'): embed_sparsity,
+        ('decoder', 'token_embedder', 'embedding'): embed_sparsity,
         ('token_embedder', 'embedding'): embed_sparsity,
     }
+
     sparsity_config.custom_sparsity_map = custom_map
 
   return api.create_updater_from_config(sparsity_config)
