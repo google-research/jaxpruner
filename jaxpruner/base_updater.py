@@ -118,6 +118,7 @@ class BaseUpdater(object):
       params,
       sparse_state = None,
       grads = None,
+      **kwargs,
   ):
     """Calculates sparsity scores of a given tree of parameters.
 
@@ -131,6 +132,7 @@ class BaseUpdater(object):
       params: A tree of parameters.
       sparse_state: An optional sparse state.
       grads: An optional tree of gradients.
+      **kwargs: Additional arguments that child classes can consume.
 
     Returns:
       A tree of the sparsity scores of parameters.
@@ -179,6 +181,7 @@ class BaseUpdater(object):
       sparse_state,
       params,
       grads,
+      **kwargs,
   ):
     """Update masks in sparse_state according to the current parameters and gradients.
 
@@ -187,6 +190,7 @@ class BaseUpdater(object):
         stored under `.inner`.
       params: A tree of parameters.
       grads: A tree of gradients.
+      **kwargs: Additional arguments to pass to `calculate_scores`.
 
     Returns:
       A sparse state with the updated masks tree.
@@ -195,7 +199,7 @@ class BaseUpdater(object):
         sparse_state.target_sparsities, sparse_state.count
     )
     scores = self.calculate_scores(
-        params, sparse_state=sparse_state, grads=grads
+        params, sparse_state=sparse_state, grads=grads, **kwargs
     )
     new_masks = self.create_masks(scores, sparsities)
     if self.use_packed_masks:
@@ -211,7 +215,11 @@ class BaseUpdater(object):
     initialization and during the update steps. In addition to this, a sparse
     state is created using the `self.init_state` function, which includes
     variables like masks needed by the algorithms. The sparse state is updated
-    according to the given schedule using `update_state` function.
+    according to the given schedule using the `self.update_state` function.
+
+    The returned transformation is a GradientTransformationExtraArgs: its
+    update function accepts arbitrary additional args which it passes to
+    `self.update_state`.
 
     Args:
       inner: An optax gradient transformation.
@@ -225,12 +233,12 @@ class BaseUpdater(object):
       sparse_state = sparse_state._replace(inner_state=inner.init(params))
       return sparse_state
 
-    def update_fn(updates, state, params):
+    def update_fn(updates, state, params, **kwargs):
       is_update_step = self.scheduler.is_mask_update_iter(state.count)
       no_update_op = lambda state, *_: state
       new_state = jax.lax.cond(
           is_update_step,
-          self.update_state,
+          functools.partial(self.update_state, **kwargs),
           no_update_op,
           state,
           params,
@@ -264,18 +272,20 @@ class BaseUpdater(object):
       )
       return new_updates, new_state
 
-    return optax.GradientTransformation(init_fn, update_fn)
+    return optax.GradientTransformationExtraArgs(init_fn, update_fn)
 
   def instant_sparsify(
       self,
       params,
       grads = None,
+      **kwargs,
   ):
     """Instantly sparsifies parameters with the sparsity distribution provided at initialization.
 
     Args:
       params: A tree of parameters.
       grads: An optional tree of gradients.
+      **kwargs: Additional arguments to pass to `calculate_scores`.
 
     Returns:
       Either pruned parameters or a tuple of pruned parameters and masks.
@@ -285,7 +295,7 @@ class BaseUpdater(object):
           'sparsity_distribution_fn needs to be provided for sparsification.'
       )
     sparsities = self.sparsity_distribution_fn(params)
-    scores = self.calculate_scores(params, grads=grads)
+    scores = self.calculate_scores(params, grads=grads, **kwargs)
     masks = self.create_masks(scores, sparsities)
     masked_params = self.apply_masks(params, masks, is_packed=False)
     if self.use_packed_masks:

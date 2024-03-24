@@ -74,6 +74,24 @@ class BaseUpdaterTest(parameterized.TestCase, absltest.TestCase):
     inner.update.assert_called_once()
     sparse_updater.calculate_scores.assert_called_once()
 
+    # Test passing an extra argument to update().
+    inner = mock.MagicMock()
+    inner.update.return_value = ({}, None)
+    sparse_updater.calculate_scores.reset_mock()
+    inner.update.assert_not_called()
+
+    tx = sparse_updater.wrap_optax(inner)
+    extra_arg = object()
+    _ = tx.update(
+        {}, base_updater.SparseState(masks=None, count=0), {}, foo=extra_arg
+    )
+    inner.update.assert_called_once()
+    _, kwargs = inner.update.call_args
+    self.assertEmpty(kwargs, 'Should not pass extra args to inner')
+    sparse_updater.calculate_scores.assert_called_once()
+    _, kwargs = sparse_updater.calculate_scores.call_args
+    self.assertDictContainsSubset({'foo': extra_arg}, kwargs)
+
   def testInstantSparsify(self):
     distribution_fn = mock.MagicMock()
     distribution_fn.return_value = {}
@@ -95,6 +113,16 @@ class BaseUpdaterTest(parameterized.TestCase, absltest.TestCase):
     chex.assert_trees_all_close(masked_vars, {'a': jnp.array([2.0, 0.0])})
     distribution_fn.assert_called_once()
     sparse_updater.calculate_scores.assert_called_once()
+
+    # Test passing an extra argument to instant_sparsify().
+    sparse_updater.calculate_scores.reset_mock()
+    extra_arg = object()
+    _ = sparse_updater.instant_sparsify(
+        {'a': jnp.array([2.0, -3.0])}, foo=extra_arg
+    )
+    sparse_updater.calculate_scores.assert_called_once()
+    _, kwargs = sparse_updater.calculate_scores.call_args
+    self.assertDictContainsSubset({'foo': extra_arg}, kwargs)
 
   def testNoPruning(self):
     updater = base_updater.NoPruning()
