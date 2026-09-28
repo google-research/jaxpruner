@@ -99,8 +99,9 @@ def _pool_2d(
     use_avg_pooling,
 ):
   """Performs 2D pooling on scores with block_shape + scores_shape[2:] window."""
-  height_remain = scores.shape[0] % block_height
-  width_remain = scores.shape[1] % block_width
+  # Pad to the next block boundary, not by the existing remainder.
+  height_remain = (-scores.shape[0]) % block_height
+  width_remain = (-scores.shape[1]) % block_width
   # Reduce all dims >= 2.
   pool_window = tuple([block_height, block_width] + list(scores.shape[2:]))
   if use_avg_pooling:
